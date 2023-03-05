@@ -1,1 +1,7 @@
 /Data
+etc/
+Include/
+Lib/
+Scripts/
+share/
+*.cfg
