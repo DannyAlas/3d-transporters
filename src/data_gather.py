@@ -25,12 +25,8 @@ from skimage.filters import (
     threshold_yen,
 )
 from skimage.io import imsave
-from skimage.measure import label, regionprops, regionprops_table
+from skimage.measure import label, regionprops_table, regionprops
 from skimage.morphology import local_maxima
-from skimage.segmentation import clear_border as _clear_border
-from skimage.segmentation import expand_labels
-from skimage.segmentation import random_walker as _random_walker
-from skimage.segmentation import relabel_sequential as _relabel_sequential
 from skimage.segmentation import watershed as _watershed
 from skimage.util import img_as_ubyte
 
@@ -52,6 +48,26 @@ THRESH_METHODS = {
 
 FAILED = {}
 
+class _layers:
+    def __iter__(self):
+        for attr, value in self.__dict__.items():
+            if not attr.startswith('__') and not callable(attr):
+                yield value 
+
+    @property
+    def layers(self):
+        return [layer for layer in self]
+    
+    def add_layer(self, data, name="layer"):
+        setattr(self, name, _layer(name, data))
+
+    def remove_layer(self, name):
+        delattr(self, name)
+
+class _layer:
+    def __init__(self, name, data):
+        self.name = name
+        self.data = data
 
 def voronoi_otsu_labeling(
     image: ImageData, spot_sigma: float = 2, outline_sigma: float = 2
@@ -207,7 +223,17 @@ def create_threshold_hist_plot(image: np.ndarray, file):
             threshes[method] = {"above": above_thresh, "below": below_thresh}
         fig.suptitle("Thresholding methods", fontsize=16)
     except Exception as e:
-        FAILED[file] = e
+        try:
+            logger.error(f"Failed to create threshold histogram plot because {e}. Trying skimage's try_all_threshold")
+            from skimage.filters import try_all_threshold
+            fig, axes = try_all_threshold(image, figsize=(20, 5), verbose=False)
+            fig.suptitle("Thresholding methods", fontsize=16)
+        except Exception as e:
+            logger.error(f"Failed try_all_thresholds: {e}")
+            if FAILED.get(str(file)):
+                FAILED[str(file)]["threshold_hist"] = e
+            else:
+                FAILED[str(file)] = {"threshold_hist": e}
 
     # determine the best thresholding method by the threshold that has the lowes misclassification rate
     misclassification_rate = {}
@@ -221,9 +247,16 @@ def create_threshold_hist_plot(image: np.ndarray, file):
 
     return fig, "Otsu"
 
+from typing import NewType, Dict
 
-def create_threshold_plot(viewer: Viewer, file: str):
-    for layer in viewer.layers:
+layers = NewType("layers", Dict[str, np.ndarray])
+
+class layers:
+    name = "test"
+    data = None
+
+def create_threshold_plot(viewer: _layers, file: str):
+    for layer in viewer:
         try:
             if len(layer.data.shape) == 3:
                 tresh_img = layer.data[0]
@@ -242,15 +275,15 @@ def create_threshold_plot(viewer: Viewer, file: str):
     return best_method
 
 
-def run_tresh_and_segmentation(viewer: Viewer, best_tresh: str):
+def run_tresh_and_segmentation(viewer: _layers, best_tresh: str):
     layers = {}
-    for layer in viewer.layers:
+    for layer in viewer:
         tresh_layer = layer.data > THRESH_METHODS[best_tresh](layer.data)
-        print("created tresh layer")
+        print("created tresh layer", layer.name)
         segmetation_layer = voronoi_otsu_labeling(
             tresh_layer, spot_sigma=2, outline_sigma=2
         )
-        print("created segmetation layer")
+        print("created segmetation layer", layer.name)
         binary = segmetation_layer > 0
         props = regionprops_table(
             segmetation_layer, binary, properties=("label", "mean_intensity")
@@ -260,23 +293,18 @@ def run_tresh_and_segmentation(viewer: Viewer, best_tresh: str):
         labels = np.where(
             np.isin(segmetation_layer, colo["label"]), segmetation_layer, 0
         )
-        print("created colo_labels layer")
+        print("created colo_labels layer", layer.name)
         layers[f"{layer.name}_segmentation"] = segmetation_layer
         layers[f"{layer.name}_{best_tresh}_threshold".lower()] = tresh_layer
         layers[f"{layer.name}_binary"] = binary
         layers[f"{layer.name}_labels"] = labels
 
     for name, data in layers.items():
-        if name.endswith("segmentation"):
-            viewer.add_labels(data, name=name)
-        elif name.endswith("labels"):
-            viewer.add_labels(data, name=name)
-        else:
-            viewer.add_image(data, name=name)
+        viewer.add_layer(data, name=name)
         print(f"added {name} to viewer")
 
 
-def save_layers(viewer: Viewer, file: str):
+def save_layers(viewer: _layers, file: str):
     # save the layers in the viewer
     file_name = os.path.basename(file)
     # create a folder for layers
@@ -284,12 +312,8 @@ def save_layers(viewer: Viewer, file: str):
         os.path.join(os.path.dirname(file), file_name.split(".")[0], "layers"),
         exist_ok=True,
     )
-    for layer in viewer.layers:
-        if layer.data is None:
-            continue
+    for layer in viewer:
         try:
-            image = img_as_ubyte(layer.data)
-            # save the image as a tiff
             imsave(
                 os.path.join(
                     os.path.dirname(file),
@@ -297,14 +321,26 @@ def save_layers(viewer: Viewer, file: str):
                     "layers",
                     f"{layer.name}.tiff",
                 ),
-                image,
+                np.asarray(layer.data),
             )
         except Exception as e:
-            FAILED[file] = e
+            try:
+                image = img_as_ubyte(layer.data)
+                imsave(
+                    os.path.join(
+                        os.path.dirname(file),
+                        file_name.split(".")[0],
+                        "layers",
+                        f"{layer.name}.tiff",
+                    ),
+                    image,
+                )
+            except Exception as e:
+                FAILED[file]["save_layers"] = e
 
 
 def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
-    for layer in viewer.layers:
+    for layer in viewer:
         # get the VGaT layer
         if layer.name == "VGaT_labels":
             vgat_labels = layer.data
@@ -314,6 +350,8 @@ def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
         # get the VGluT3
         elif layer.name == "VGluT3_labels":
             vglut3_labels = layer.data
+        
+    assert vgat_labels is not None and gfp_binary is not None and vglut3_labels is not None, "VGaT, GFP and VGluT3 layers are required for colocalization calculation."
 
     properties = ("label", "mean_intensity", "area", "bbox")
     props = regionprops_table(vgat_labels, gfp_binary, properties=properties)
@@ -353,30 +391,80 @@ def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
     file_name = os.path.basename(file)
     colo_vgat_gfp_table.to_csv(
         os.path.join(
-            os.path.dirname(file), file_name.split(".")[0], "VGaT_colocalization.csv"
+            os.path.dirname(file), file_name.split(".")[0], f"{file_name.split('.')[0]}_VGaT_colocalization.csv"
         ),
         index=False,
     )
     colo_vglut_gfp_table.to_csv(
         os.path.join(
-            os.path.dirname(file), file_name.split(".")[0], "VGluT3_colocalization.csv"
+            os.path.dirname(file), file_name.split(".")[0], f"{file_name.split('.')[0]}_VGluT3_colocalization.csv"
         ),
         index=False,
     )
 
+    # create a plot for number of colocalized VGaT and VGluT3
+    fig, ax = plt.subplots()
+    ax.bar(
+        ["VGaT", "VGluT3"],
+        [len(colo_vgat_gfp_table), len(colo_vglut_gfp_table)],
+    )
+    ax.set_title("Number of colocalized VGaT and VGluT3")
+    ax.set_ylabel("Number of colocalized VGaT and VGluT3")
+    ax.set_xlabel("VGaT and VGluT3")
+    plt.savefig(
+        os.path.join(
+            os.path.dirname(file), file_name.split(".")[0], f"{file_name.split('.')[0]}colocalization_amount.png"
+        )
+    )
 
+    # create a plot for the average size of colocalized VGaT and VGluT3
+    fig, ax = plt.subplots()
+    ax.bar(
+        ["VGaT", "VGluT3"],
+        [
+            np.mean([prop.area for prop in regionprops(colo_vgat_gfp)]),
+            np.mean([prop.area for prop in regionprops(colo_vglut_gfp)]),
+        ],
+    )
+    ax.set_title("Average size of colocalized VGaT and VGluT3")
+    ax.set_ylabel("Average size of colocalized VGaT and VGluT3")
+    ax.set_xlabel("VGaT and VGluT3")
+    plt.savefig(
+        os.path.join(
+            os.path.dirname(file), file_name.split(".")[0], f"{file_name.split('.')[0]}colocalization_size.png"
+        )
+    )
+    
+
+    
+
+cant_process = []
 def runner(file: str):
+    
     with ND2Reader(file) as images:
-        metadata = images.metadata
+            metadata = images.metadata
+            viewer = _layers()
 
-    # start napaari viewer with no gui
-    viewer = Viewer(show=False)
-    try:
-        viewer.open(file, plugin="napari-nikon-nd2")
-    except Exception as e:
-        FAILED[file] = e
-        return
-    set_napari_channels(viewer, metadata)
+            for i, channel in enumerate(metadata['channels']):
+                try:
+                    data = np.zeros((images.sizes['z'], images.sizes['x'], images.sizes['y']))
+                    for t in range(images.sizes['z']):
+                        data[t,:,:] = images.get_frame_2D(c=i, z=t)
+
+                    viewer.add_layer(data, name=channel)
+
+                except KeyError as e:
+                    cant_process.append(file)
+                    return
+
+    for layer in viewer:
+        if layer.name == "TRITC":
+            layer.name = "VGaT"
+        elif layer.name == "EGFP":
+            layer.name = "EGFP"
+        elif layer.name == "Cy5":
+            layer.name = "VGluT3"
+
 
     best_tresh = create_threshold_plot(viewer, file)
 
@@ -388,13 +476,10 @@ def runner(file: str):
     # calculate the colocalization
     calculate_colocalization(viewer, metadata, file)
 
-    # close the viewer
-    viewer.close()
 
 
-def main():
+def main(dir: str):
     warnings.filterwarnings("ignore")
-    dir = r"C:\Users\Daniel\Desktop\Work\lab\Data\drive-download-20230301T232528Z-001"
     files = []
     for file in os.listdir(dir):
         if file.endswith(".nd2"):
@@ -415,7 +500,3 @@ def main():
             print(f"failed to process {file}: {e}")
     else:
         print("all files processed successfully")
-
-
-if __name__ == "__main__":
-    main()
