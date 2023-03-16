@@ -1,11 +1,13 @@
-from .._tier0 import plugin_function
-from .._tier0 import Image
-from .._tier0 import push
-from .._tier1 import replace_intensities
-from .._tier1 import set_column
+from .._tier0 import Image, plugin_function, push
+from .._tier1 import replace_intensities, set_column
 
-@plugin_function(categories=['combine', 'label measurement', 'map', 'in assistant'], priority=-1)
-def label_maximum_intensity_map(intensity_image : Image, labels : Image, maximum_intensity_map : Image = None) -> Image:
+
+@plugin_function(
+    categories=["combine", "label measurement", "map", "in assistant"], priority=-1
+)
+def label_maximum_intensity_map(
+    intensity_image: Image, labels: Image, maximum_intensity_map: Image = None
+) -> Image:
     """Takes an image and a corresponding label map, determines
     the maximum intensity per label and replaces every label with
     the that number.
@@ -26,14 +28,16 @@ def label_maximum_intensity_map(intensity_image : Image, labels : Image, maximum
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_maximumIntensityMap
     """
-    from .._tier9 import statistics_of_background_and_labelled_pixels
-    from .._tier9 import push_regionprops_column
+    from .._tier9 import (push_regionprops_column,
+                          statistics_of_background_and_labelled_pixels)
 
     regionprops = statistics_of_background_and_labelled_pixels(intensity_image, labels)
 
-    values_vector = push_regionprops_column(regionprops, 'max_intensity')
+    values_vector = push_regionprops_column(regionprops, "max_intensity")
     set_column(values_vector, 0, 0)
 
-    maximum_intensity_map = replace_intensities(labels, values_vector, maximum_intensity_map)
+    maximum_intensity_map = replace_intensities(
+        labels, values_vector, maximum_intensity_map
+    )
 
     return maximum_intensity_map

@@ -1,17 +1,17 @@
+from .._tier0 import Image, create_none, execute, plugin_function
 from .._tier2 import maximum_of_all_pixels
-from .._tier0 import create_none
-from .._tier0 import execute
-from .._tier0 import plugin_function
-from .._tier0 import Image
+
 
 @plugin_function(output_creator=create_none)
-def centroids_of_labels(labels:Image, pointlist_destination :Image = None, include_background :bool = False) -> Image:
-    """Determines the centroids of all labels in a label image or image stack. 
-    
-    It writes the resulting  coordinates in a pointlist image. Depending on 
-    the dimensionality d of the labelmap and the number  of labels n, the 
-    pointlist image will have n*d pixels. 
-    
+def centroids_of_labels(
+    labels: Image, pointlist_destination: Image = None, include_background: bool = False
+) -> Image:
+    """Determines the centroids of all labels in a label image or image stack.
+
+    It writes the resulting  coordinates in a pointlist image. Depending on
+    the dimensionality d of the labelmap and the number  of labels n, the
+    pointlist image will have n*d pixels.
+
     Parameters
     ----------
     labels : Image
@@ -25,12 +25,13 @@ def centroids_of_labels(labels:Image, pointlist_destination :Image = None, inclu
     Returns
     -------
     pointlist_destination
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_centroidsOfLabels
     """
     from .._tier2 import maximum_of_all_pixels
+
     num_labels = int(maximum_of_all_pixels(labels)) + 1
 
     width = labels.shape[-1]
@@ -40,17 +41,12 @@ def centroids_of_labels(labels:Image, pointlist_destination :Image = None, inclu
     else:
         depth = 1
 
-    #print("------------------------------------------------")
-    #print("w/h/d/l", width, height, depth, num_labels)
+    # print("------------------------------------------------")
+    # print("w/h/d/l", width, height, depth, num_labels)
 
     from .._tier0 import create
-    from .._tier1 import set
-    from .._tier1 import sum_x_projection
-    from .._tier1 import sum_y_projection
-    from .._tier1 import sum_z_projection
-    from .._tier1 import crop
-    from .._tier1 import paste
-    from .._tier1 import divide_images
+    from .._tier1 import (crop, divide_images, paste, set, sum_x_projection,
+                          sum_y_projection, sum_z_projection)
 
     sum_per_label_image = create([4, height, num_labels])
     set(sum_per_label_image, 0)
@@ -58,21 +54,22 @@ def centroids_of_labels(labels:Image, pointlist_destination :Image = None, inclu
     dimensions = [1, height, 1]
 
     parameters = {
-        'dst': sum_per_label_image,
-        'src': labels,
-        'sum_background': 1 if include_background else 0
+        "dst": sum_per_label_image,
+        "src": labels,
+        "sum_background": 1 if include_background else 0,
     }
 
     for z in range(0, depth):
-        #print('z', z)
-        parameters['z'] = z
+        # print('z', z)
+        parameters["z"] = z
 
         from .._tier0 import execute
-        execute(__file__, 'sum_per_label_x.cl', 'sum_per_label', dimensions, parameters)
+
+        execute(__file__, "sum_per_label_x.cl", "sum_per_label", dimensions, parameters)
 
     sum_per_label = sum_y_projection(sum_per_label_image)
 
-    #print(sum_per_label)
+    # print(sum_per_label)
 
     num_dimensions = len(labels.shape)
 
@@ -93,17 +90,11 @@ def centroids_of_labels(labels:Image, pointlist_destination :Image = None, inclu
     sum_dim = create([1, num_labels])
     avg_dim = create([1, num_labels])
 
-
-
     for dim in range(0, num_dimensions):
 
         crop(sum_per_label, sum_dim, target_x, dim, 0)
         divide_images(sum_dim, sum, avg_dim)
         paste(avg_dim, pointlist_destination, 0, dim, 0)
 
-    #print(pointlist_destination)
+    # print(pointlist_destination)
     return pointlist_destination
-
-
-
-

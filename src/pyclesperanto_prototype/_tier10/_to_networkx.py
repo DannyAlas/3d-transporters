@@ -1,8 +1,9 @@
-from .._tier0 import plugin_function
-from .._tier0 import Image
 import numpy as np
 
-def to_networkx(adjacency_matrix:Image, centroids:Image=None):
+from .._tier0 import Image, plugin_function
+
+
+def to_networkx(adjacency_matrix: Image, centroids: Image = None):
     """
     Converts a given adjacency matrix to a networkx [1] graph data structure.
 
@@ -28,15 +29,18 @@ def to_networkx(adjacency_matrix:Image, centroids:Image=None):
     try:
         import networkx
     except ImportError:
-        raise ImportError("networkx (version 3 or above) is not installed. Please refer to the documentation https://networkx.org/documentation/stable/install.html")
+        raise ImportError(
+            "networkx (version 3 or above) is not installed. Please refer to the documentation https://networkx.org/documentation/stable/install.html"
+        )
 
-    networkx_graph = networkx.from_numpy_array(np.asarray(adjacency_matrix)[1:,1:])
+    networkx_graph = networkx.from_numpy_array(np.asarray(adjacency_matrix)[1:, 1:])
 
     if centroids is not None:
         from .._tier1 import transpose_xy
+
         centroid_positions = transpose_xy(centroids)
 
         for n in range(len(networkx_graph.nodes)):
-            networkx_graph.nodes[n]['pos'] = np.asarray(centroid_positions[n])
+            networkx_graph.nodes[n]["pos"] = np.asarray(centroid_positions[n])
 
     return networkx_graph

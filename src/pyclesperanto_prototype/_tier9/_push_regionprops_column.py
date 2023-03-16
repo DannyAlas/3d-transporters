@@ -1,14 +1,17 @@
 from typing import Union
+
 from .._tier0 import Image
 
-def push_regionprops_column(regionprops : Union[list, dict], column : str) -> Image:
-    from .._tier0 import push
+
+def push_regionprops_column(regionprops: Union[list, dict], column: str) -> Image:
     import numpy as np
+
+    from .._tier0 import push
 
     if isinstance(regionprops, dict):
         return push(np.asarray([regionprops[column]]))
     else:
-        if hasattr(regionprops[0], 'original_label'):
+        if hasattr(regionprops[0], "original_label"):
             labels = [r.original_label for r in regionprops]
         else:
             labels = [r.label for r in regionprops]
@@ -16,7 +19,7 @@ def push_regionprops_column(regionprops : Union[list, dict], column : str) -> Im
 
         values = np.zeros([max_label + 1])
         for r in regionprops:
-            if hasattr(r, 'original_label'):
+            if hasattr(r, "original_label"):
                 label = r.original_label
             else:
                 label = r.label

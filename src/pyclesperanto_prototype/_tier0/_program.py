@@ -1,4 +1,3 @@
-
 import warnings
 from functools import lru_cache
 
@@ -6,10 +5,11 @@ import pyopencl as cl
 
 
 class OCLProgram(cl.Program):
-    """ a wrapper class representing a CPU/GPU Program
+    """a wrapper class representing a CPU/GPU Program
     example:
          prog = OCLProgram("mykernels.cl",build_options=["-D FLAG"])
     """
+
     _wait_for_kernel_finish = None
 
     def __init__(self, file_name=None, src_str=None, build_options=[], dev=None):
@@ -22,6 +22,7 @@ class OCLProgram(cl.Program):
 
         if dev is None:
             from ._device import get_device
+
             dev = get_device()
 
         self._dev = dev
@@ -42,5 +43,7 @@ class OCLProgram(cl.Program):
     @classmethod
     @lru_cache(maxsize=128)
     def from_source(cls, source):
-        warnings.warn("OCLProgram.from_source is deprecated. Use Device.program_from_source instead.")
+        warnings.warn(
+            "OCLProgram.from_source is deprecated. Use Device.program_from_source instead."
+        )
         return cls(src_str=source)

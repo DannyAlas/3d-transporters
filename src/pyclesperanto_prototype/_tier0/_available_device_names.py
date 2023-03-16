@@ -3,7 +3,7 @@ from typing import List
 from .._tier0._device import filter_devices
 
 
-def available_device_names(dev_type: str = None, score_key = None) -> List[str]:
+def available_device_names(dev_type: str = None, score_key=None) -> List[str]:
     """Retrieve a list of names of available OpenCL-devices
 
     Parameters
@@ -39,6 +39,7 @@ def available_device_names(dev_type: str = None, score_key = None) -> List[str]:
         import cupy
 
         from ._cuda_backend import cuda_backend
+
         device_names = device_names + [str(cuda_backend())]
     except ImportError:
         pass

@@ -1,9 +1,10 @@
-from .._tier0 import Image
-from .._tier0 import plugin_function
-from .._tier0 import create_labels_like
+from .._tier0 import Image, create_labels_like, plugin_function
 
-@plugin_function(categories=['label processing', 'in assistant'], output_creator=create_labels_like)
-def reduce_labels_to_label_edges(source:Image, destination:Image=None) -> Image:
+
+@plugin_function(
+    categories=["label processing", "in assistant"], output_creator=create_labels_like
+)
+def reduce_labels_to_label_edges(source: Image, destination: Image = None) -> Image:
     """Takes a label map and reduces all labels to their edges. Label IDs stay and background will be zero.
 
     Parameters
@@ -19,7 +20,7 @@ def reduce_labels_to_label_edges(source:Image, destination:Image=None) -> Image:
     --------
     ..[0] https://clij.github.io/clij2-docs/reference_reduceLabelsToLabelEdges
     """
-    from .._tier1 import mask, detect_label_edges
+    from .._tier1 import detect_label_edges, mask
 
     binary = detect_label_edges(source)
     mask(source, binary, destination)

@@ -1,7 +1,17 @@
 from ._backends import Backend
 
 
-def execute(anchor, opencl_kernel_filename:str, kernel_name:str, global_size, parameters, prog = None, constants = None, image_size_independent_kernel_compilation : bool = None, device = None):
+def execute(
+    anchor,
+    opencl_kernel_filename: str,
+    kernel_name: str,
+    global_size,
+    parameters,
+    prog=None,
+    constants=None,
+    image_size_independent_kernel_compilation: bool = None,
+    device=None,
+):
     """
     Call opencl kernels (.cl files)
 
@@ -34,4 +44,18 @@ def execute(anchor, opencl_kernel_filename:str, kernel_name:str, global_size, pa
     https://github.com/clij/clij-clearcl/blob/master/src/main/java/net/haesleinhuepf/clij/clearcl/util/CLKernelExecutor.java
 
     """
-    return Backend.get_instance().get().execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters, prog, constants, image_size_independent_kernel_compilation, device)
+    return (
+        Backend.get_instance()
+        .get()
+        .execute(
+            anchor,
+            opencl_kernel_filename,
+            kernel_name,
+            global_size,
+            parameters,
+            prog,
+            constants,
+            image_size_independent_kernel_compilation,
+            device,
+        )
+    )

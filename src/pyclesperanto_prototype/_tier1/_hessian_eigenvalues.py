@@ -1,14 +1,13 @@
-from .._tier0 import execute
+from .._tier0 import Image, execute, plugin_function
 
-from .._tier0 import plugin_function
-from .._tier0 import Image
 
 @plugin_function
-def hessian_eigenvalues(source: Image,
-                        small_eigenvalue_destination: Image = None,
-                        middle_eigenvalue_destination: Image = None,
-                        large_eigenvalue_destination: Image = None,
-                        ) -> Image:
+def hessian_eigenvalues(
+    source: Image,
+    small_eigenvalue_destination: Image = None,
+    middle_eigenvalue_destination: Image = None,
+    large_eigenvalue_destination: Image = None,
+) -> Image:
     """Computes the eigenvalues of the hessian matrix of a 2d or 3d image.
 
     Hessian matrix or 2D images:
@@ -60,9 +59,19 @@ def hessian_eigenvalues(source: Image,
             "large_eigenvalue": large_eigenvalue_destination,
         }
 
-    execute(__file__, 'hessian_eigenvalues_' + str(len(source.shape)) + 'd.cl', 'hessian_eigenvalues_' + str(len(source.shape)) + 'd', source.shape, parameters)
+    execute(
+        __file__,
+        "hessian_eigenvalues_" + str(len(source.shape)) + "d.cl",
+        "hessian_eigenvalues_" + str(len(source.shape)) + "d",
+        source.shape,
+        parameters,
+    )
 
     if len(source.shape) == 2:
         return small_eigenvalue_destination, None, large_eigenvalue_destination
     else:  # 3D
-        return small_eigenvalue_destination, middle_eigenvalue_destination, large_eigenvalue_destination
+        return (
+            small_eigenvalue_destination,
+            middle_eigenvalue_destination,
+            large_eigenvalue_destination,
+        )

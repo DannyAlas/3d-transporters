@@ -1,16 +1,17 @@
-from .._tier0 import plugin_function
-from .._tier0 import Image
-from .._tier0 import create_none, create_like
+from .._tier0 import Image, create_like, create_none, plugin_function
 
-@plugin_function(categories=['transform', 'in assistant'], output_creator=create_none)
-def scale(source: Image,
-          destination: Image = None,
-          factor_x: float = 1,
-          factor_y: float = 1,
-          factor_z: float = 1,
-          centered: bool = True,
-          linear_interpolation: bool = False,
-          auto_size: bool = False) -> Image:
+
+@plugin_function(categories=["transform", "in assistant"], output_creator=create_none)
+def scale(
+    source: Image,
+    destination: Image = None,
+    factor_x: float = 1,
+    factor_y: float = 1,
+    factor_z: float = 1,
+    centered: bool = True,
+    linear_interpolation: bool = False,
+    auto_size: bool = False,
+) -> Image:
     """Scale the image by given factors.
 
     Parameters
@@ -44,8 +45,8 @@ def scale(source: Image,
     --------
     ..[1] affine_transform
     """
-    from ._AffineTransform3D import AffineTransform3D
     from ._affine_transform import affine_transform
+    from ._AffineTransform3D import AffineTransform3D
 
     if destination is None and not auto_size:
         destination = create_like(source)
@@ -59,4 +60,6 @@ def scale(source: Image,
     if centered and not auto_size:
         transform.center(destination.shape, undo=True)
 
-    return affine_transform(source, destination, transform, linear_interpolation, auto_size)
+    return affine_transform(
+        source, destination, transform, linear_interpolation, auto_size
+    )

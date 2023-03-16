@@ -1,16 +1,17 @@
-from .._tier0 import plugin_function
-from .._tier0 import Image, create_none
+from .._tier0 import Image, create_none, plugin_function
 
-@plugin_function(categories=['transform', 'in assistant'], output_creator=create_none)
+
+@plugin_function(categories=["transform", "in assistant"], output_creator=create_none)
 def rotate(
-        source: Image,
-        destination: Image = None,
-        angle_around_x_in_degrees: float = 0,
-        angle_around_y_in_degrees: float = 0,
-        angle_around_z_in_degrees: float = 0,
-        rotate_around_center: bool = True,
-        linear_interpolation: bool = False,
-        auto_size: bool = False) -> Image:
+    source: Image,
+    destination: Image = None,
+    angle_around_x_in_degrees: float = 0,
+    angle_around_y_in_degrees: float = 0,
+    angle_around_z_in_degrees: float = 0,
+    rotate_around_center: bool = True,
+    linear_interpolation: bool = False,
+    auto_size: bool = False,
+) -> Image:
     """Rotate the image by given angles.
 
     Angles are given in degrees. To convert radians to degrees, use this formula:
@@ -48,8 +49,8 @@ def rotate(
     --------
     ..[1] affine_transform
     """
-    from ._AffineTransform3D import AffineTransform3D
     from ._affine_transform import affine_transform
+    from ._AffineTransform3D import AffineTransform3D
 
     transform = AffineTransform3D()
     if rotate_around_center:
@@ -65,4 +66,6 @@ def rotate(
     if rotate_around_center:
         transform.center(source.shape, undo=True)
 
-    return affine_transform(source, destination, transform, linear_interpolation, auto_size)
+    return affine_transform(
+        source, destination, transform, linear_interpolation, auto_size
+    )

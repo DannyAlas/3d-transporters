@@ -1,14 +1,17 @@
-from .._tier0 import plugin_function
-from .._tier0 import Image
+from .._tier0 import Image, create_like, create_none, plugin_function
 from .._tier1 import not_equal_constant
-from .._tier0 import create_none
-from .._tier0 import create_like
 
-@plugin_function(output_creator=create_none, categories=['label processing', 'combine'])
-def exclude_labels_with_values_not_equal_to_constant(values_vector : Image, label_map_input : Image, label_map_destination : Image = None, constant : float = 0) -> Image:
-    """This operation removes labels from a labelmap and renumbers the 
+
+@plugin_function(output_creator=create_none, categories=["label processing", "combine"])
+def exclude_labels_with_values_not_equal_to_constant(
+    values_vector: Image,
+    label_map_input: Image,
+    label_map_destination: Image = None,
+    constant: float = 0,
+) -> Image:
+    """This operation removes labels from a labelmap and renumbers the
     remaining labels.
-    
+
     Parameters
     ----------
     values_vector : Image
@@ -19,7 +22,7 @@ def exclude_labels_with_values_not_equal_to_constant(values_vector : Image, labe
     Returns
     -------
     label_map_destination
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_excludeLabelsWithValuesWithinRange
@@ -29,6 +32,9 @@ def exclude_labels_with_values_not_equal_to_constant(values_vector : Image, labe
     not_equal_constant(values_vector, flaglist_vector, constant)
 
     from .._tier3 import exclude_labels
-    label_map_destination = exclude_labels(flaglist_vector, label_map_input, label_map_destination)
+
+    label_map_destination = exclude_labels(
+        flaglist_vector, label_map_input, label_map_destination
+    )
 
     return label_map_destination

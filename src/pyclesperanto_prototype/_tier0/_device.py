@@ -26,6 +26,7 @@ class Device:
     @lru_cache(maxsize=128)
     def program_from_source(self, source):
         from ._program import OCLProgram
+
         return OCLProgram(src_str=source, dev=self)
 
 
@@ -46,7 +47,9 @@ def get_device() -> Device:
     return _current_device._instance or select_device()
 
 
-def select_device(name: str = None, dev_type: str = None, score_key=None, device_index: int = -1) -> Device:
+def select_device(
+    name: str = None, dev_type: str = None, score_key=None, device_index: int = -1
+) -> Device:
     """Set current GPU device based on optional parameters.
 
     :param name: First device that contains ``name`` will be returned, defaults to None
@@ -65,18 +68,21 @@ def select_device(name: str = None, dev_type: str = None, score_key=None, device
         import cupy
 
         from ._cuda_backend import cuda_backend
+
         cuda_b = cuda_backend()
         if name in str(cuda_b) or name == str(cuda_b):
             from ._backends import Backend
+
             Backend.get_instance().set(cuda_b)
             return str(cuda_b)
     except:
         pass
 
-
     device = filter_devices(name, dev_type, score_key)[device_index]
     if name is not None and name not in device.name:
-        warnings.warn(f"No OpenCL device found with {name} in their name. Using {device.name} instead.")
+        warnings.warn(
+            f"No OpenCL device found with {name} in their name. Using {device.name} instead."
+        )
 
     if _current_device._instance and device == _current_device._instance.device:
         return _current_device._instance
@@ -85,11 +91,13 @@ def select_device(name: str = None, dev_type: str = None, score_key=None, device
     _current_device._instance = Device(device, context, queue)
     return _current_device._instance
 
+
 def new_device(name: str = None, dev_type: str = None, score_key=None) -> Device:
     device = filter_devices(name, dev_type, score_key)[-1]
     context = cl.Context(devices=[device])
     queue = cl.CommandQueue(context)
     return Device(device, context, queue)
+
 
 def filter_devices(
     name: str = None, dev_type: str = None, score_key=None
@@ -132,4 +140,3 @@ def set_device_scoring_key(func: Callable[[cl.Device], int]) -> None:
     except Exception as e:
         raise ValueError(f"Scoring algorithm invalid: {e}")
     _current_device.score_key = func
-

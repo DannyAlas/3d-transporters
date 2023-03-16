@@ -1,14 +1,15 @@
 from warnings import warn
 
-from .._tier0 import Image
-from .._tier0 import create_none
-from .._tier0 import plugin_function
+from .._tier0 import Image, create_none, plugin_function
+
 
 @plugin_function(output_creator=create_none)
-def statistics_of_labelled_pixels(intensity_image : Image = None, label_image : Image = None):
+def statistics_of_labelled_pixels(
+    intensity_image: Image = None, label_image: Image = None
+):
     """Determines bounding box, area (in pixels/voxels), min, max, mean, standard deviation of the intensity and some
     shape descriptors of labelled objects in a label map and corresponding pixels in the original image.
-    
+
     Instead of a label map, you can also use a binary image as a binary image is a label map with just one label.
 
         Note: the parameter order is different compared to regionprops.
@@ -24,20 +25,13 @@ def statistics_of_labelled_pixels(intensity_image : Image = None, label_image : 
     .. [1] https://clij.github.io/clij2-docs/reference_statisticsOfLabelledPixels
     """
 
-    from .._tier0 import create
-    from .._tier0 import create_like
-    from .._tier1 import set
-    from .._tier1 import sum_y_projection
-    from .._tier1 import minimum_y_projection
-    from .._tier1 import maximum_y_projection
-    from .._tier1 import crop
-    from .._tier1 import paste
-    from .._tier1 import divide_images
-    from .._tier1 import set_plane
-    from .._tier0 import pull
-    from .._tier1 import power
-    from .._tier2 import maximum_of_all_pixels
     import numpy as np
+
+    from .._tier0 import create, create_like, pull
+    from .._tier1 import (crop, divide_images, maximum_y_projection,
+                          minimum_y_projection, paste, power, set, set_plane,
+                          sum_y_projection)
+    from .._tier2 import maximum_of_all_pixels
 
     # check if label image and intensity image a properly set
     if intensity_image is None and label_image is None:
@@ -45,7 +39,7 @@ def statistics_of_labelled_pixels(intensity_image : Image = None, label_image : 
     if label_image is None:
         warn("No label image provided. All pixels will be analysed in one group.")
         label_image = create_like(intensity_image)
-        set(label_image, 1) # all pixels belong to label 1
+        set(label_image, 1)  # all pixels belong to label 1
     if intensity_image is None:
         intensity_image = label_image
 
@@ -100,17 +94,24 @@ def statistics_of_labelled_pixels(intensity_image : Image = None, label_image : 
     # accumulate statistics slice-by-slice
     dimensions = [1, height, 1]
     parameters = {
-        'dst': cumulative_stats_per_label_image,
-        'src_label': label_image,
-        'src_image': intensity_image,
-        'sum_background': 0  # don't analyse background
+        "dst": cumulative_stats_per_label_image,
+        "src_label": label_image,
+        "src_image": intensity_image,
+        "sum_background": 0,  # don't analyse background
     }
     for z in range(0, depth):
-        #print('z', z)
-        parameters['z'] = z
+        # print('z', z)
+        parameters["z"] = z
 
         from .._tier0 import execute
-        execute(__file__, 'statistics_per_label_x.cl', 'statistics_per_label', dimensions, parameters)
+
+        execute(
+            __file__,
+            "statistics_per_label_x.cl",
+            "statistics_per_label",
+            dimensions,
+            parameters,
+        )
 
     # collect slice-by-slice measurements in single planes
     sum_per_label = sum_y_projection(cumulative_stats_per_label_image)
@@ -126,8 +127,8 @@ def statistics_of_labelled_pixels(intensity_image : Image = None, label_image : 
     # <param_name> = <column index>
     # --------------------
     # IDENTIFIER = 0
-    region_props['label'] = np.arange(measurements_start_x, num_labels)
-    region_props['original_label'] = np.arange(measurements_start_x, num_labels)
+    region_props["label"] = np.arange(measurements_start_x, num_labels)
+    region_props["original_label"] = np.arange(measurements_start_x, num_labels)
 
     #     BOUNDING_BOX_X = 1
     #     BOUNDING_BOX_Y = 2
@@ -137,29 +138,30 @@ def statistics_of_labelled_pixels(intensity_image : Image = None, label_image : 
     #     BOUNDING_BOX_DEPTH = 9
     crop(min_per_label, result_vector, measurements_start_x, 10, 0)
     bbox_min_x = pull(result_vector)[0]
-    region_props['bbox_min_x'] = bbox_min_x
+    region_props["bbox_min_x"] = bbox_min_x
 
     crop(min_per_label, result_vector, measurements_start_x, 12, 0)
     bbox_min_y = pull(result_vector)[0]
-    region_props['bbox_min_y'] = bbox_min_y
+    region_props["bbox_min_y"] = bbox_min_y
 
     crop(min_per_label, result_vector, measurements_start_x, 14, 0)
     bbox_min_z = pull(result_vector)[0]
-    region_props['bbox_min_z'] = bbox_min_z
+    region_props["bbox_min_z"] = bbox_min_z
 
     crop(max_per_label, result_vector, measurements_start_x, 11, 0)
     bbox_max_x = pull(result_vector)[0]
-    region_props['bbox_max_x'] = bbox_max_x
+    region_props["bbox_max_x"] = bbox_max_x
 
     crop(max_per_label, result_vector, measurements_start_x, 13, 0)
     bbox_max_y = pull(result_vector)[0]
-    region_props['bbox_max_y'] = bbox_max_y
+    region_props["bbox_max_y"] = bbox_max_y
 
     crop(max_per_label, result_vector, measurements_start_x, 15, 0)
     bbox_max_z = pull(result_vector)[0]
-    region_props['bbox_max_z'] = bbox_max_z
+    region_props["bbox_max_z"] = bbox_max_z
 
     import warnings
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         if len(intensity_image.shape) == 2:
@@ -169,7 +171,7 @@ def statistics_of_labelled_pixels(intensity_image : Image = None, label_image : 
                 bbox_max_y - bbox_min_y + 1,
                 bbox_max_x - bbox_min_x + 1,
             ]
-        else: # 3-dimensional image
+        else:  # 3-dimensional image
             bbox = [
                 bbox_min_z,
                 bbox_min_y,
@@ -178,29 +180,29 @@ def statistics_of_labelled_pixels(intensity_image : Image = None, label_image : 
                 bbox_max_y - bbox_min_y + 1,
                 bbox_max_x - bbox_min_x + 1,
             ]
-        region_props['bbox_width'] = bbox_max_x - bbox_min_x + 1
-        region_props['bbox_height'] = bbox_max_y - bbox_min_y + 1
-        region_props['bbox_depth'] = bbox_max_z - bbox_min_z + 1
+        region_props["bbox_width"] = bbox_max_x - bbox_min_x + 1
+        region_props["bbox_height"] = bbox_max_y - bbox_min_y + 1
+        region_props["bbox_depth"] = bbox_max_z - bbox_min_z + 1
 
     #     MINIMUM_INTENSITY = 10
     #     MAXIMUM_INTENSITY = 11
     crop(min_per_label, result_vector, measurements_start_x, 8, 0)
-    region_props['min_intensity'] = pull(result_vector)[0]
+    region_props["min_intensity"] = pull(result_vector)[0]
     crop(max_per_label, result_vector, measurements_start_x, 9, 0)
-    region_props['max_intensity'] = pull(result_vector)[0]
+    region_props["max_intensity"] = pull(result_vector)[0]
 
     #     MEAN_INTENSITY = 12
     #     SUM_INTENSITY = 13
     #     PIXEL_COUNT = 15
     crop(sum_per_label, result_vector, measurements_start_x, 7, 0)
-    region_props['sum_intensity'] = pull(result_vector)[0]
+    region_props["sum_intensity"] = pull(result_vector)[0]
 
     crop(sum_per_label, sum_dim, measurements_start_x, 3, 0)
-    region_props['area'] = pull(sum_dim)[0]
+    region_props["area"] = pull(sum_dim)[0]
     paste(sum_dim, label_statistics_image, measurements_start_x, 7, 0)
 
     divide_images(result_vector, sum_dim, avg_dim)
-    region_props['mean_intensity'] = pull(avg_dim)[0]
+    region_props["mean_intensity"] = pull(avg_dim)[0]
     paste(avg_dim, label_statistics_image, measurements_start_x, 6, 0)
 
     #     SUM_INTENSITY_TIMES_X = 16
@@ -209,13 +211,13 @@ def statistics_of_labelled_pixels(intensity_image : Image = None, label_image : 
     #     MASS_CENTER_X = 19
     #     MASS_CENTER_Y = 20
     #     MASS_CENTER_Z = 21
-    dim_names = ['x', 'y', 'z']
+    dim_names = ["x", "y", "z"]
     crop(sum_per_label, result_vector, measurements_start_x, 4 + 3, 0)
     for dim in range(0, 3):
         crop(sum_per_label, sum_dim, measurements_start_x, 4 + dim, 0)
-        region_props['sum_intensity_times_' + dim_names[dim]] = pull(sum_dim)[0]
+        region_props["sum_intensity_times_" + dim_names[dim]] = pull(sum_dim)[0]
         divide_images(sum_dim, result_vector, avg_dim)
-        region_props['mass_center_' + dim_names[dim]] = pull(avg_dim)[0]
+        region_props["mass_center_" + dim_names[dim]] = pull(avg_dim)[0]
         paste(avg_dim, label_statistics_image, measurements_start_x, 3 + dim, 0)
 
     #     SUM_X = 22
@@ -227,9 +229,9 @@ def statistics_of_labelled_pixels(intensity_image : Image = None, label_image : 
     crop(sum_per_label, result_vector, measurements_start_x, 3, 0)
     for dim in range(0, 3):
         crop(sum_per_label, sum_dim, measurements_start_x, dim, 0)
-        region_props['sum_' + dim_names[dim]] = pull(sum_dim)[0]
+        region_props["sum_" + dim_names[dim]] = pull(sum_dim)[0]
         divide_images(sum_dim, result_vector, avg_dim)
-        region_props['centroid_' + dim_names[dim]] = pull(avg_dim)[0]
+        region_props["centroid_" + dim_names[dim]] = pull(avg_dim)[0]
         paste(avg_dim, label_statistics_image, measurements_start_x, dim, 0)
 
     # ================================================================
@@ -240,18 +242,25 @@ def statistics_of_labelled_pixels(intensity_image : Image = None, label_image : 
 
     # accumulate statistics slice-by-slice
     parameters = {
-        'dst': label_statistics_stack,
-        'src_statistics': label_statistics_image,
-        'src_label': label_image,
-        'src_image': intensity_image,
-        'sum_background': 0 # don't analyse background
+        "dst": label_statistics_stack,
+        "src_statistics": label_statistics_image,
+        "src_label": label_image,
+        "src_image": intensity_image,
+        "sum_background": 0,  # don't analyse background
     }
     for z in range(0, depth):
         # print('z', z)
-        parameters['z'] = z
+        parameters["z"] = z
 
         from .._tier0 import execute
-        execute(__file__, 'standard_deviation_per_label_x.cl', 'standard_deviation_per_label', dimensions, parameters)
+
+        execute(
+            __file__,
+            "standard_deviation_per_label_x.cl",
+            "standard_deviation_per_label",
+            dimensions,
+            parameters,
+        )
 
     sum_statistics = sum_y_projection(label_statistics_stack)
     max_statistics = maximum_y_projection(label_statistics_stack)
@@ -261,33 +270,38 @@ def statistics_of_labelled_pixels(intensity_image : Image = None, label_image : 
 
     # distance to centroid
     crop(sum_statistics, sum_dim, measurements_start_x, 0, 0)
-    region_props['sum_distance_to_centroid'] = pull(sum_dim)[0]
+    region_props["sum_distance_to_centroid"] = pull(sum_dim)[0]
     divide_images(sum_dim, result_vector, avg_dim)
-    region_props['mean_distance_to_centroid'] = pull(avg_dim)[0]
+    region_props["mean_distance_to_centroid"] = pull(avg_dim)[0]
 
     # distance to center of mass
     crop(sum_statistics, sum_dim, measurements_start_x, 1, 0)
-    region_props['sum_distance_to_mass_center'] = pull(sum_dim)[0]
+    region_props["sum_distance_to_mass_center"] = pull(sum_dim)[0]
     divide_images(sum_dim, result_vector, avg_dim)
-    region_props['mean_distance_to_mass_center'] = pull(avg_dim)[0]
+    region_props["mean_distance_to_mass_center"] = pull(avg_dim)[0]
 
     # standard deviation intensity
     crop(sum_statistics, sum_dim, measurements_start_x, 2, 0)
     power(sum_dim, result_vector, 0.5)
-    region_props['standard_deviation_intensity'] = pull(result_vector)[0]
+    region_props["standard_deviation_intensity"] = pull(result_vector)[0]
 
     crop(max_statistics, result_vector, measurements_start_x, 4, 0)
-    region_props['max_distance_to_centroid'] = pull(result_vector)[0]
+    region_props["max_distance_to_centroid"] = pull(result_vector)[0]
     crop(max_statistics, result_vector, measurements_start_x, 5, 0)
-    region_props['max_distance_to_mass_center'] = pull(result_vector)[0]
+    region_props["max_distance_to_mass_center"] = pull(result_vector)[0]
 
     import warnings
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        
-        region_props['mean_max_distance_to_centroid_ratio'] = region_props['max_distance_to_centroid'] / region_props[
-            'mean_distance_to_centroid']
-        region_props['mean_max_distance_to_mass_center_ratio'] = region_props['max_distance_to_mass_center'] / region_props[
-            'mean_distance_to_mass_center']
+
+        region_props["mean_max_distance_to_centroid_ratio"] = (
+            region_props["max_distance_to_centroid"]
+            / region_props["mean_distance_to_centroid"]
+        )
+        region_props["mean_max_distance_to_mass_center_ratio"] = (
+            region_props["max_distance_to_mass_center"]
+            / region_props["mean_distance_to_mass_center"]
+        )
 
     return region_props

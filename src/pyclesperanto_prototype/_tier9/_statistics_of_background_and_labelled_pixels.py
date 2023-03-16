@@ -1,21 +1,21 @@
 from skimage.measure import regionprops
 
-from .._tier0 import Image
-from .._tier0 import create_none
-from .._tier0 import plugin_function
-from .._tier0 import pull
+from .._tier0 import Image, create_none, plugin_function, pull
+
 
 @plugin_function(output_creator=create_none)
-def statistics_of_background_and_labelled_pixels(source : Image = None, labelmap : Image = None):
-    """Determines bounding box, area (in pixels/voxels), min, max and mean 
+def statistics_of_background_and_labelled_pixels(
+    source: Image = None, labelmap: Image = None
+):
+    """Determines bounding box, area (in pixels/voxels), min, max and mean
     intensity of background and labelled objects in a label map and corresponding
     pixels in the original image.
-    
-    Instead of a label map, you can also use a binary image as a binary image is a 
+
+    Instead of a label map, you can also use a binary image as a binary image is a
     label map with just one label.
-    
-    This method is executed on the CPU and not on the GPU/OpenCL device. 
-    
+
+    This method is executed on the CPU and not on the GPU/OpenCL device.
+
     Parameters
     ----------
     source : Image
@@ -24,7 +24,7 @@ def statistics_of_background_and_labelled_pixels(source : Image = None, labelmap
     Returns
     -------
     Dictionary of measurements
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_statisticsOfBackgroundAndLabelledPixels
@@ -37,7 +37,7 @@ def statistics_of_background_and_labelled_pixels(source : Image = None, labelmap
 
     if isinstance(regionprops, dict):
         # correct regionprops label
-        regionprops['original_label'] = regionprops['label'] - 1
+        regionprops["original_label"] = regionprops["label"] - 1
 
     else:
         # correct regionprops label
@@ -45,6 +45,3 @@ def statistics_of_background_and_labelled_pixels(source : Image = None, labelmap
             r.original_label = r.label - 1
 
     return regionprops
-
-
-

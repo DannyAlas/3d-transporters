@@ -1,20 +1,20 @@
-from .._tier0 import execute
-from .._tier0 import plugin_function
-from .._tier0 import Image, create_none, create
+from .._tier0 import Image, create, create_none, execute, plugin_function
 
-@plugin_function(categories=['transform', 'in assistant'], output_creator=create_none)
-def range(source : Image,
-          destination : Image = None,
-          start_x: int = None,
-          stop_x: int = None,
-          step_x: int = None,
-          start_y:int = None,
-          stop_y: int = None,
-          step_y: int = None,
-          start_z:int = None,
-          stop_z: int = None,
-          step_z: int = None
-          ) -> Image:
+
+@plugin_function(categories=["transform", "in assistant"], output_creator=create_none)
+def range(
+    source: Image,
+    destination: Image = None,
+    start_x: int = None,
+    stop_x: int = None,
+    step_x: int = None,
+    start_y: int = None,
+    stop_y: int = None,
+    step_y: int = None,
+    start_z: int = None,
+    stop_z: int = None,
+    step_z: int = None,
+) -> Image:
     """Crops an image according to a defined range and step size
 
     Parameters
@@ -63,13 +63,15 @@ def range(source : Image,
 
     if destination is None:
         if len(source.shape) > 2:
-            destination = create((stop_z - start_z, stop_y - start_y, stop_x - start_x), source.dtype)
+            destination = create(
+                (stop_z - start_z, stop_y - start_y, stop_x - start_x), source.dtype
+            )
         else:
             destination = create((stop_y - start_y, stop_x - start_x), source.dtype)
 
     parameters = {
-        "dst":destination,
-        "src":source,
+        "dst": destination,
+        "src": source,
         "start_x": int(start_x),
         "step_x": int(step_x),
         "start_y": int(start_y),
@@ -78,5 +80,5 @@ def range(source : Image,
         "step_z": int(step_z),
     }
 
-    execute(__file__, 'range_x.cl', 'range', destination.shape, parameters)
+    execute(__file__, "range_x.cl", "range", destination.shape, parameters)
     return destination

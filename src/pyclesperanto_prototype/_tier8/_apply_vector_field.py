@@ -1,9 +1,15 @@
-from .._tier0 import plugin_function
-from .._tier0 import Image
-from .._tier0 import create_none
+from .._tier0 import Image, create_none, plugin_function
+
 
 @plugin_function(output_creator=create_none)
-def apply_vector_field(source : Image, vector_x : Image, vector_y : Image, vector_z : Image = None, destination : Image = None, linear_interpolation : bool = False) -> Image:
+def apply_vector_field(
+    source: Image,
+    vector_x: Image,
+    vector_y: Image,
+    vector_z: Image = None,
+    destination: Image = None,
+    linear_interpolation: bool = False,
+) -> Image:
     """
     Deforms an image stack according to distances provided in the given vector image stacks.
 
@@ -26,22 +32,21 @@ def apply_vector_field(source : Image, vector_x : Image, vector_y : Image, vecto
     destination
 
     """
-    from .._tier0 import empty_image_like
-    from .._tier0 import execute
+    from .._tier0 import create_like, empty_image_like, execute
     from .._tier1 import copy
-    from .._tier0 import create_like
 
     if destination is None:
         destination = create_like(source)
 
-    kernel_suffix = ''
+    kernel_suffix = ""
     if linear_interpolation:
         image = empty_image_like(source)
         copy(source, image)
         if type(source) != type(image):
-            kernel_suffix = '_interpolate'
+            kernel_suffix = "_interpolate"
         else:
             from .._tier0 import _warn_of_interpolation_not_available
+
             _warn_of_interpolation_not_available()
         source = image
 
@@ -61,7 +66,16 @@ def apply_vector_field(source : Image, vector_x : Image, vector_y : Image, vecto
             "dst": destination,
         }
 
-    execute(__file__, 'clij-opencl-kernels/kernels/apply_vectorfield_' + str(len(destination.shape)) + 'd' + kernel_suffix + '_x.cl',
-            'apply_vectorfield_' + str(len(destination.shape)) + 'd' + kernel_suffix, destination.shape, parameters)
+    execute(
+        __file__,
+        "clij-opencl-kernels/kernels/apply_vectorfield_"
+        + str(len(destination.shape))
+        + "d"
+        + kernel_suffix
+        + "_x.cl",
+        "apply_vectorfield_" + str(len(destination.shape)) + "d" + kernel_suffix,
+        destination.shape,
+        parameters,
+    )
 
     return destination

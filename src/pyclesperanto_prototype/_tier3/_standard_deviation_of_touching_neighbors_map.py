@@ -1,9 +1,14 @@
-from .._tier0 import execute
-from .._tier0 import plugin_function
-from .._tier0 import Image
+from .._tier0 import Image, execute, plugin_function
 
-@plugin_function(categories=['combine', 'neighbor', 'map', 'in assistant'])
-def standard_deviation_of_touching_neighbors_map(parametric_map : Image, label_map : Image, parametric_map_destination : Image = None, radius : int = 1, ignore_touching_background : bool = True) -> Image:
+
+@plugin_function(categories=["combine", "neighbor", "map", "in assistant"])
+def standard_deviation_of_touching_neighbors_map(
+    parametric_map: Image,
+    label_map: Image,
+    parametric_map_destination: Image = None,
+    radius: int = 1,
+    ignore_touching_background: bool = True,
+) -> Image:
     """Takes a label image and a parametric intensity image and will replace each labels value in the parametric image
     by the standard deviation value of neighboring labels. The radius of the neighborhood can be configured:
     * radius 0: Nothing is replaced
@@ -31,13 +36,11 @@ def standard_deviation_of_touching_neighbors_map(parametric_map : Image, label_m
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_standardDeviationOfTouchingNeighbors
     """
-    from .._tier1 import copy
-    from .._tier1 import generate_touch_matrix
-    from .._tier2 import neighbors_of_neighbors
-    from .._tier1 import read_intensities_from_map
-    from .._tier2 import standard_deviation_of_touching_neighbors
-    from .._tier1 import replace_intensities
-    from .._tier1 import set_column
+    from .._tier1 import (copy, generate_touch_matrix,
+                          read_intensities_from_map, replace_intensities,
+                          set_column)
+    from .._tier2 import (neighbors_of_neighbors,
+                          standard_deviation_of_touching_neighbors)
 
     if radius == 0:
         return copy(parametric_map, parametric_map_destination)
@@ -53,8 +56,12 @@ def standard_deviation_of_touching_neighbors_map(parametric_map : Image, label_m
 
     intensities = read_intensities_from_map(label_map, parametric_map)
 
-    new_intensities = standard_deviation_of_touching_neighbors(intensities, touch_matrix)
+    new_intensities = standard_deviation_of_touching_neighbors(
+        intensities, touch_matrix
+    )
 
-    parametric_map_destination = replace_intensities(label_map, new_intensities, parametric_map_destination)
+    parametric_map_destination = replace_intensities(
+        label_map, new_intensities, parametric_map_destination
+    )
 
     return parametric_map_destination

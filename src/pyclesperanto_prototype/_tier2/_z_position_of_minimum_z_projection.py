@@ -1,8 +1,11 @@
-from pyclesperanto_prototype._tier0 import plugin_function, Image, create_2d_yx, execute
+from pyclesperanto_prototype._tier0 import (Image, create_2d_yx, execute,
+                                            plugin_function)
 
 
-@plugin_function(output_creator=create_2d_yx, categories=['projection', 'in assistant'])
-def z_position_of_minimum_z_projection(source: Image, destination: Image = None) -> Image:
+@plugin_function(output_creator=create_2d_yx, categories=["projection", "in assistant"])
+def z_position_of_minimum_z_projection(
+    source: Image, destination: Image = None
+) -> Image:
     """Determines a Z-position of the minimum intensity along Z and writes it into the resulting image.
 
     If there are multiple z-slices with the same value, the smallest Z will be chosen.
@@ -27,7 +30,12 @@ def z_position_of_minimum_z_projection(source: Image, destination: Image = None)
         "src": source,
     }
 
-    execute(__file__, 'z_position_of_minimum_z_projection_x.cl', 'z_position_of_minimum_z_projection',
-            destination.shape, parameters)
+    execute(
+        __file__,
+        "z_position_of_minimum_z_projection_x.cl",
+        "z_position_of_minimum_z_projection",
+        destination.shape,
+        parameters,
+    )
 
     return destination

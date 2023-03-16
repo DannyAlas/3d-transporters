@@ -1,9 +1,15 @@
-from .._tier0 import Image
-from .._tier0 import plugin_function
-from .._tier0 import create_labels_like
+from .._tier0 import Image, create_labels_like, plugin_function
 
-@plugin_function(categories=['label processing', 'in assistant'], output_creator=create_labels_like)
-def erode_labels(labels_input : Image, labels_destination : Image = None, radius: int = 1, relabel_islands : bool = False) -> Image:
+
+@plugin_function(
+    categories=["label processing", "in assistant"], output_creator=create_labels_like
+)
+def erode_labels(
+    labels_input: Image,
+    labels_destination: Image = None,
+    radius: int = 1,
+    relabel_islands: bool = False,
+) -> Image:
     """Erodes labels to a smaller size. Note: Depending on the label image and the radius,
     labels may disappear and labels may split into multiple islands. Thus, overlapping labels of input and output may
     not have the same identifier.
@@ -32,11 +38,13 @@ def erode_labels(labels_input : Image, labels_destination : Image = None, radius
     ..[1] https://clij.github.io/clij2-docs/reference_erodeLabels
     """
     from .._tier1 import copy
+
     if radius <= 0:
         copy(labels_input, labels_destination)
         return labels_destination
 
-    from .._tier1 import detect_label_edges, binary_not, mask, minimum_sphere, minimum_box, not_equal_constant
+    from .._tier1 import (binary_not, detect_label_edges, mask, minimum_box,
+                          minimum_sphere, not_equal_constant)
     from .._tier3 import relabel_sequential
     from .._tier5 import connected_components_labeling_diamond
 

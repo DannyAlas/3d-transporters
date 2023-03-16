@@ -1,12 +1,16 @@
 import numpy as np
 
-from .._tier0 import execute
-from .._tier0 import plugin_function
-from .._tier0 import Image
-import numpy as np
+from .._tier0 import Image, execute, plugin_function
+
 
 @plugin_function
-def nan_to_num(source : Image, destination : Image = None, nan : float = 0, posinf : float = np.nan_to_num(np.inf), neginf : float = np.nan_to_num(-np.inf)) -> Image:
+def nan_to_num(
+    source: Image,
+    destination: Image = None,
+    nan: float = 0,
+    posinf: float = np.nan_to_num(np.inf),
+    neginf: float = np.nan_to_num(-np.inf),
+) -> Image:
     """Copies all pixels instead those which are not a number (NaN), or positive/negative infinity
     which are replaced by a defined new value, default 0.
 
@@ -28,18 +32,18 @@ def nan_to_num(source : Image, destination : Image = None, nan : float = 0, posi
     Returns
     -------
     destination
-    
+
     See also
     --------
     ..[1] https://numpy.org/doc/stable/reference/generated/numpy.nan_to_num.html
     """
     parameters = {
-        "dst":destination,
-        "src":source,
-        "new_nan_value":float(nan),
-        "new_posinf_value":float(posinf),
-        "new_neginf_value":float(neginf),
+        "dst": destination,
+        "src": source,
+        "new_nan_value": float(nan),
+        "new_posinf_value": float(posinf),
+        "new_neginf_value": float(neginf),
     }
 
-    execute(__file__, 'nan_to_num.cl', 'nan_to_num', destination.shape, parameters)
+    execute(__file__, "nan_to_num.cl", "nan_to_num", destination.shape, parameters)
     return destination

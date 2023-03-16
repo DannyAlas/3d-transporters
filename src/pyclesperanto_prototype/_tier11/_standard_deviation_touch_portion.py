@@ -1,10 +1,13 @@
-from .._tier0 import plugin_function
+from .._tier0 import Image, create_vector_from_labelmap, plugin_function
 from .._tier1 import replace_intensities
-from .._tier0 import Image
-from .._tier0 import create_vector_from_labelmap
 
-@plugin_function(categories=['label measurement'], output_creator=create_vector_from_labelmap)
-def standard_deviation_touch_portion(labels : Image, std_touch_portion_vector_destination : Image = None) -> Image:
+
+@plugin_function(
+    categories=["label measurement"], output_creator=create_vector_from_labelmap
+)
+def standard_deviation_touch_portion(
+    labels: Image, std_touch_portion_vector_destination: Image = None
+) -> Image:
     """Measure touch portion of all labels to each other and determine the standard deviation of the touch portion for
     each label and write it into a vector.
 
@@ -21,8 +24,9 @@ def standard_deviation_touch_portion(labels : Image, std_touch_portion_vector_de
     -------
     std_touch_portion_map_destination
     """
-    from .._tier1 import generate_touch_matrix, set_row, set_column, set_where_x_equals_y, divide_images, nan_to_num
-    from .._tier1 import sum_y_projection, reciprocal, multiply_images, absolute
+    from .._tier1 import (absolute, divide_images, generate_touch_matrix,
+                          multiply_images, nan_to_num, reciprocal, set_column,
+                          set_row, set_where_x_equals_y, sum_y_projection)
     from .._tier2 import touch_matrix_to_adjacency_matrix
     from .._tier4 import generate_touch_portion_matrix
 
@@ -45,5 +49,10 @@ def standard_deviation_touch_portion(labels : Image, std_touch_portion_vector_de
     absolute_deviation_matrix = absolute(touch_portion_matrix - mean_portion_matrix)
 
     # dividing it by count and summing over all labels gives us the standard deviation
-    standard_deviation_matrix = divide_images(absolute_deviation_matrix, touch_count_vector)
-    return nan_to_num(sum_y_projection(standard_deviation_matrix), std_touch_portion_vector_destination)
+    standard_deviation_matrix = divide_images(
+        absolute_deviation_matrix, touch_count_vector
+    )
+    return nan_to_num(
+        sum_y_projection(standard_deviation_matrix),
+        std_touch_portion_vector_destination,
+    )

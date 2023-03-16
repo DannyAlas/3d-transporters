@@ -1,9 +1,10 @@
-from .._tier0 import execute
-from .._tier0 import Image
-from .._tier0 import plugin_function
+from .._tier0 import Image, execute, plugin_function
+
 
 @plugin_function
-def block_enumerate(src : Image, src_sums : Image, dst : Image = None, blocksize : int = 256) -> Image:
+def block_enumerate(
+    src: Image, src_sums: Image, dst: Image = None, blocksize: int = 256
+) -> Image:
     """Enumerates pixels with value 1 in a one-dimensional image
 
     For example handing over the image
@@ -40,10 +41,16 @@ def block_enumerate(src : Image, src_sums : Image, dst : Image = None, blocksize
     parameters = {
         "dst": dst,
         "src": src,
-        "src_sums":src_sums,
-        "blocksize": int(blocksize)
+        "src_sums": src_sums,
+        "blocksize": int(blocksize),
     }
 
-    execute(__file__, 'clij-opencl-kernels/kernels/block_enumerate_x.cl', 'block_enumerate', src_sums.shape, parameters)
+    execute(
+        __file__,
+        "clij-opencl-kernels/kernels/block_enumerate_x.cl",
+        "block_enumerate",
+        src_sums.shape,
+        parameters,
+    )
 
     return dst

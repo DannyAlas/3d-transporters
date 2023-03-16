@@ -1,8 +1,8 @@
-from .._tier0 import plugin_function
-from .._tier0 import Image, create_none
+from .._tier0 import Image, create_none, plugin_function
+
 
 @plugin_function(output_creator=create_none)
-def prefix_in_x(source:Image, destination:Image = None, scalar:float=0):
+def prefix_in_x(source: Image, destination: Image = None, scalar: float = 0):
     """Takes a matrix or vector and adds a scalar in x-direction.
 
     This is often useful, e.g. if you have a vector of measurements and you need a vector of background 0 and behind

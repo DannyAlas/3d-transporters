@@ -1,7 +1,4 @@
-from .._tier0 import create
-from .._tier0 import pull
-from .._tier0 import plugin_function
-from .._tier0 import Image
+from .._tier0 import Image, create, plugin_function, pull
 
 
 @plugin_function
@@ -22,12 +19,11 @@ def minimum_position(source: Image) -> tuple:
     >>> import pyclesperanto_prototype as cle
     >>> cle.minimum_position(source)
     """
-    from .._tier1 import minimum_x_projection
-    from .._tier1 import minimum_y_projection
-    from .._tier1 import minimum_z_projection
-    from .._tier2 import x_position_of_minimum_x_projection
-    from .._tier2 import y_position_of_minimum_y_projection
-    from .._tier2 import z_position_of_minimum_z_projection
+    from .._tier1 import (minimum_x_projection, minimum_y_projection,
+                          minimum_z_projection)
+    from .._tier2 import (x_position_of_minimum_x_projection,
+                          y_position_of_minimum_y_projection,
+                          z_position_of_minimum_z_projection)
 
     # Find minimum projections and positions along each axis, reducing the dimensionality of the array
     # To have the same properties as ndi.minimum_position, find projections in the order X -> Y -> Z

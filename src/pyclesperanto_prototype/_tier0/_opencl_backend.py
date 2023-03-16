@@ -8,7 +8,8 @@ from ._pycl import OCLArray, assert_supported_ndarray_type
 def opencl_backend():
     return OpenCLBackend()
 
-class OpenCLBackend():
+
+class OpenCLBackend:
     def __init__(self):
         pass
 
@@ -27,11 +28,13 @@ class OpenCLBackend():
 
         try:
             return empty_image(ctx, arr.shape, arr.dtype)
-        except pyopencl._cl.RuntimeError as e: # assuming this is clCreateImage failed: IMAGE_FORMAT_NOT_SUPPORTED
+        except pyopencl._cl.RuntimeError as e:  # assuming this is clCreateImage failed: IMAGE_FORMAT_NOT_SUPPORTED
             from .._tier0 import _warn_of_interpolation_not_available
+
             _warn_of_interpolation_not_available()
             print(e)
             from ._create import create
+
             return create(arr.shape, arr.dtype)
 
     def empty(self, shape, dtype=np.float32):
@@ -39,8 +42,29 @@ class OpenCLBackend():
         queue = get_device().queue
         return OCLArray(queue, shape, dtype)
 
-    def execute(self, anchor, opencl_kernel_filename, kernel_name, global_size, parameters, prog = None, constants = None, image_size_independent_kernel_compilation : bool = None, device = None):
-        return execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters, prog, constants, image_size_independent_kernel_compilation, device)
+    def execute(
+        self,
+        anchor,
+        opencl_kernel_filename,
+        kernel_name,
+        global_size,
+        parameters,
+        prog=None,
+        constants=None,
+        image_size_independent_kernel_compilation: bool = None,
+        device=None,
+    ):
+        return execute(
+            anchor,
+            opencl_kernel_filename,
+            kernel_name,
+            global_size,
+            parameters,
+            prog,
+            constants,
+            image_size_independent_kernel_compilation,
+            device,
+        )
 
     def from_array(self, *args, **kwargs):
         return OCLArray.from_array(*args, **kwargs)

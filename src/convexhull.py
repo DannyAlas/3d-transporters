@@ -1,7 +1,9 @@
-from collections import namedtuple  
-import matplotlib.pyplot as plt  
+from collections import namedtuple
 
-class ConvexHull(object):  
+import matplotlib.pyplot as plt
+
+
+class ConvexHull(object):
     _points = []
     _hull_points = []
 
@@ -10,31 +12,30 @@ class ConvexHull(object):
 
     def add(self, point):
         self._points.append(point)
-    
+
     def reset(self, point):
         self._points = []
         self._hull_points = []
 
     def _get_orientation(self, origin, p1, p2):
-        '''
+        """
         Returns the orientation of the Point p1 with regards to Point p2 using origin.
         Negative if p1 is clockwise of p2.
         :param p1:
         :param p2:
         :return: integer
-        '''
-        difference = (
-            ((p2.x - origin.x) * (p1.y - origin.y))
-            - ((p1.x - origin.x) * (p2.y - origin.y))
+        """
+        difference = ((p2.x - origin.x) * (p1.y - origin.y)) - (
+            (p1.x - origin.x) * (p2.y - origin.y)
         )
 
         return difference
 
     def compute_hull(self):
-        '''
+        """
         Computes the points that make up the convex hull.
         :return:
-        '''
+        """
         points = self._points
 
         # get leftmost point
@@ -84,13 +85,12 @@ class ConvexHull(object):
         # all points
         x = [p.x for p in self._points]
         y = [p.y for p in self._points]
-        plt.plot(x, y, marker='D', linestyle='None')
+        plt.plot(x, y, marker="D", linestyle="None")
 
         # hull points
         hx = [p.x for p in self._hull_points]
         hy = [p.y for p in self._hull_points]
         plt.plot(hx, hy)
 
-        plt.title('Convex Hull')
+        plt.title("Convex Hull")
         plt.show()
-

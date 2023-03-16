@@ -1,9 +1,13 @@
-from .._tier0 import Image
-from .._tier0 import create_none
-from .._tier0 import plugin_function
+from .._tier0 import Image, create_none, plugin_function
+
 
 @plugin_function(output_creator=create_none)
-def regionprops(labelmap : Image, intensity_image : Image = None, cache : bool = True, extra_properties = []) -> Image:
+def regionprops(
+    labelmap: Image,
+    intensity_image: Image = None,
+    cache: bool = True,
+    extra_properties=[],
+) -> Image:
     """Convert the intensity image and the corresponding label image to numpy arrays (via pull) and calls scikit-image
     regionprops [1]. Hence, this operation runs on the CPU. A faster, GPU-accelerated function with limited measurements
     is available as statistics_of_labelled_pixels [2].
@@ -45,7 +49,13 @@ def regionprops(labelmap : Image, intensity_image : Image = None, cache : bool =
     extra_properties.append(standard_deviation_intensity)
 
     from skimage import measure
-    props = measure.regionprops(label_image, intensity_image=intensity_image, cache=cache, extra_properties=extra_properties)
+
+    props = measure.regionprops(
+        label_image,
+        intensity_image=intensity_image,
+        cache=cache,
+        extra_properties=extra_properties,
+    )
 
     # save regionprops label
     for r in props:

@@ -5,8 +5,6 @@ import numpy as np
 import pyopencl as cl
 
 
-
-
 def empty_image(ctx, shape, dtype, num_channels=1, channel_order=None):
     if not len(shape) in [2, 3]:
         raise ValueError(
@@ -39,17 +37,20 @@ def empty_image(ctx, shape, dtype, num_channels=1, channel_order=None):
     res.dtype = dtype
     res.num_channels = num_channels
     from ._pycl import _OCLImage
+
     return _OCLImage(res)
 
 
 def empty_image_like(arr, ctx=None):
     from ._backends import Backend
+
     return Backend.get_instance().get().empty_image_like(arr, ctx)
 
 
 def create_image(arr: np.ndarray, ctx: cl.Context = None, *args, **kwargs) -> cl.Image:
     if ctx is None:
         from .._tier0 import get_device
+
         ctx = get_device().context
 
     """Create a pyopencl.Image from a numpy array.

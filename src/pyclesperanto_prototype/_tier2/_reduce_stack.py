@@ -1,29 +1,29 @@
 import warnings
 
-from .._tier0 import Image
-from .._tier0 import plugin_function
-from .._tier0 import create_none
-from .._tier0 import create
+from .._tier0 import Image, create, create_none, plugin_function
 from .._tier1 import copy_slice
 
-@plugin_function(output_creator=create_none, categories=['transform', 'in assistant'])
-def reduce_stack(source : Image, destination : Image = None, reduction_factor : int = 2, offset : int = 0) -> Image:
+
+@plugin_function(output_creator=create_none, categories=["transform", "in assistant"])
+def reduce_stack(
+    source: Image, destination: Image = None, reduction_factor: int = 2, offset: int = 0
+) -> Image:
     """Reduces the number of slices in a stack by a given factor.
-    With the offset you have control which slices stay: 
-    * With factor 3 and offset 0, slices 0, 3, 6,... are kept. * With factor 
-    4 and offset 1, slices 1, 5, 9,... are kept. 
-    
+    With the offset you have control which slices stay:
+    * With factor 3 and offset 0, slices 0, 3, 6,... are kept. * With factor
+    4 and offset 1, slices 1, 5, 9,... are kept.
+
     Parameters
     ----------
     source : Image
     destination : Image, optional
     reduction_factor : Number, optional
     offset : Number, optional
-    
+
     Returns
     -------
     destination
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_reduceStack

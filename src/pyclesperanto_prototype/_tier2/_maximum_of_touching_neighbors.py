@@ -1,27 +1,28 @@
-from .._tier0 import execute
-from .._tier0 import plugin_function
-from .._tier0 import Image
+from .._tier0 import Image, execute, plugin_function
+
 
 @plugin_function
-def maximum_of_touching_neighbors(values : Image, touch_matrix : Image, maximum_values_destination : Image = None) -> Image:
-    """Takes a touch matrix and a vector of values to determine the maximum 
-    value among touching neighbors for every object. 
-    
+def maximum_of_touching_neighbors(
+    values: Image, touch_matrix: Image, maximum_values_destination: Image = None
+) -> Image:
+    """Takes a touch matrix and a vector of values to determine the maximum
+    value among touching neighbors for every object.
+
     Parameters
     ----------
     values : Image
-        A vector of values corresponding to the labels of which the maximum 
+        A vector of values corresponding to the labels of which the maximum
     should be determined.
     touch_matrix : Image
-        A touch_matrix specifying which labels are taken into account for 
+        A touch_matrix specifying which labels are taken into account for
     neighborhood relationships.
     maximum_values_destination : Image, optional
         A the resulting vector of maximum values in the neighborhood.
-    
+
     Returns
     -------
     maximum_values_destination
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_maximumOfTouchingNeighbors
@@ -38,10 +39,16 @@ def maximum_of_touching_neighbors(values : Image, touch_matrix : Image, maximum_
         "src_values": values,
         "src_touch_matrix": touch_matrix,
         "dst_values": maximum_values_destination,
-        "x_correction": int(x_correction)
+        "x_correction": int(x_correction),
     }
 
     # todo: correct kernel function name to fulfill naming conventions
-    execute(__file__, 'clij-opencl-kernels/kernels/maximum_of_touching_neighbors_x.cl', 'maximum_value_of_touching_neighbors', maximum_values_destination.shape, parameters)
+    execute(
+        __file__,
+        "clij-opencl-kernels/kernels/maximum_of_touching_neighbors_x.cl",
+        "maximum_value_of_touching_neighbors",
+        maximum_values_destination.shape,
+        parameters,
+    )
 
     return maximum_values_destination

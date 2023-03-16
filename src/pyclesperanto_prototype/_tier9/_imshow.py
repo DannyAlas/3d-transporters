@@ -1,7 +1,20 @@
 from .._tier0 import Image, plugin_function
 
+
 @plugin_function
-def imshow(image : Image, title : str = None, labels : bool = False, min_display_intensity : float = None, max_display_intensity : float = None, color_map = None, plot = None, colorbar:bool = False, colormap = None, alpha:float = None, continue_drawing:bool = False):
+def imshow(
+    image: Image,
+    title: str = None,
+    labels: bool = False,
+    min_display_intensity: float = None,
+    max_display_intensity: float = None,
+    color_map=None,
+    plot=None,
+    colorbar: bool = False,
+    colormap=None,
+    alpha: float = None,
+    continue_drawing: bool = False,
+):
     """Visualize an image, e.g. in Jupyter notebooks.
 
     Parameters
@@ -31,6 +44,7 @@ def imshow(image : Image, title : str = None, labels : bool = False, min_display
         True: the next shown image can be visualized on top of the current one, e.g. with alpha = 0.5
     """
     import numpy as np
+
     from .._tier0 import pull
     from .._tier1 import maximum_z_projection
 
@@ -43,7 +57,10 @@ def imshow(image : Image, title : str = None, labels : bool = False, min_display
 
     if color_map is not None:
         import warnings
-        warnings.warn("The imshow parameter color_map is deprecated. Use colormap instead.")
+
+        warnings.warn(
+            "The imshow parameter color_map is deprecated. Use colormap instead."
+        )
         if colormap is None:
             colormap = color_map
 
@@ -56,8 +73,8 @@ def imshow(image : Image, title : str = None, labels : bool = False, min_display
         import numpy as np
 
         if not hasattr(imshow, "labels_cmap"):
-            from numpy.random import MT19937
-            from numpy.random import RandomState, SeedSequence
+            from numpy.random import MT19937, RandomState, SeedSequence
+
             rs = RandomState(MT19937(SeedSequence(3)))
             lut = rs.rand(65537, 3)
             lut[0, :] = 0
@@ -66,7 +83,7 @@ def imshow(image : Image, title : str = None, labels : bool = False, min_display
             lut[2] = [1.0, 0.4980392156862745, 0.054901960784313725]
             lut[3] = [0.17254901960784313, 0.6274509803921569, 0.17254901960784313]
             lut[4] = [0.8392156862745098, 0.15294117647058825, 0.1568627450980392]
-            
+
             imshow.labels_cmap = matplotlib.colors.ListedColormap(lut)
         cmap = imshow.labels_cmap
 
@@ -77,16 +94,36 @@ def imshow(image : Image, title : str = None, labels : bool = False, min_display
 
     if plot is None:
         import matplotlib.pyplot as plt
-        plt.imshow(image, cmap=cmap, vmin=min_display_intensity, vmax=max_display_intensity, interpolation='nearest', alpha=alpha)
+
+        plt.imshow(
+            image,
+            cmap=cmap,
+            vmin=min_display_intensity,
+            vmax=max_display_intensity,
+            interpolation="nearest",
+            alpha=alpha,
+        )
         if colorbar:
             plt.colorbar()
         if not continue_drawing:
             plt.show()
     else:
-        ims = plot.imshow(image, cmap=cmap, vmin=min_display_intensity, vmax=max_display_intensity, interpolation='nearest', alpha=alpha)
+        ims = plot.imshow(
+            image,
+            cmap=cmap,
+            vmin=min_display_intensity,
+            vmax=max_display_intensity,
+            interpolation="nearest",
+            alpha=alpha,
+        )
         if colorbar:
             fig = plot.get_figure()
-            cax = fig.add_axes([plot.get_position().x1 + 0.01, plot.get_position().y0, 0.005,
-                                 plot.get_position().height])
+            cax = fig.add_axes(
+                [
+                    plot.get_position().x1 + 0.01,
+                    plot.get_position().y0,
+                    0.005,
+                    plot.get_position().height,
+                ]
+            )
             fig.colorbar(ims, cax=cax)
-

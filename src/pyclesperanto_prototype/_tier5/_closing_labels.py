@@ -1,11 +1,14 @@
-from .._tier0 import plugin_function, Image
-from .._tier0 import create_like, create_labels_like
-from .._tier1 import erode_sphere, erode_box, multiply_images, copy
+from .._tier0 import Image, create_labels_like, create_like, plugin_function
+from .._tier1 import copy, erode_box, erode_sphere, multiply_images
 from .._tier4 import dilate_labels
 
 
-@plugin_function(categories=['label processing', 'in assistant'], output_creator=create_labels_like)
-def closing_labels(labels_input: Image, labels_destination: Image = None, radius: int = 0) -> Image:
+@plugin_function(
+    categories=["label processing", "in assistant"], output_creator=create_labels_like
+)
+def closing_labels(
+    labels_input: Image, labels_destination: Image = None, radius: int = 0
+) -> Image:
     """Apply a morphological closing operation to a label image.
 
     The operation consists of iterative dilation and erosion of the labels.

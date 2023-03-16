@@ -9,7 +9,7 @@ def push(any_array):
     .. deprecated:: 0.6.0
         `push` behaviour will be changed pyclesperanto_prototype 0.7.0 to do the same as
         `push_zyx` because it's faster and having both doing different things is confusing.
-    
+
     Parameters
     ----------
     image : numpy array
@@ -17,12 +17,12 @@ def push(any_array):
     Returns
     -------
     object of type backend.array_type()
-    
+
     Examples
     --------
     >>> import pyclesperanto_prototype as cle
     >>> cle.push(image)
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_push
@@ -37,7 +37,11 @@ def push(any_array):
     if isinstance(any_array, list) or isinstance(any_array, tuple):
         any_array = np.asarray(any_array)
 
-    if hasattr(any_array, 'shape') and hasattr(any_array, 'dtype') and hasattr(any_array, 'get'):
+    if (
+        hasattr(any_array, "shape")
+        and hasattr(any_array, "dtype")
+        and hasattr(any_array, "get")
+    ):
         any_array = np.asarray(any_array.get())
 
     return Backend.get_instance().get().from_array(np.float32(any_array))
@@ -45,9 +49,9 @@ def push(any_array):
 
 def push_zyx(any_array):
     import warnings
+
     warnings.warn(
         "Deprecated: `push_zyx()` is now deprecated as it does the same as `push()`.",
-        DeprecationWarning
+        DeprecationWarning,
     )
     return push(any_array)
-

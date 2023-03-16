@@ -1,19 +1,19 @@
 import warnings
-from .._tier0 import plugin_function
-from .._tier0 import Image
-from .._tier0 import create_none
+
+from .._tier0 import Image, create_none, plugin_function
 
 
-@plugin_function(output_creator=create_none, categories=['transform', 'in assistant'])
-def deskew_y(input_image: Image,
-             output_image: Image = None,
-             angle_in_degrees: float = 30,
-             voxel_size_x: float = 1,
-             voxel_size_y: float = 1,
-             voxel_size_z: float = 1,
-             scale_factor: float = 1,
-             linear_interpolation: bool = True
-             ) -> Image:
+@plugin_function(output_creator=create_none, categories=["transform", "in assistant"])
+def deskew_y(
+    input_image: Image,
+    output_image: Image = None,
+    angle_in_degrees: float = 30,
+    voxel_size_x: float = 1,
+    voxel_size_y: float = 1,
+    voxel_size_z: float = 1,
+    scale_factor: float = 1,
+    linear_interpolation: bool = True,
+) -> Image:
     """
     Deskew an image stack as acquired with oblique plane light-sheet microscopy with skew in the Y direction.
 
@@ -43,26 +43,42 @@ def deskew_y(input_image: Image,
     output_image
     """
     if not linear_interpolation:
-        warnings.warn("linear_interpolation = False is deprecated due to deskewing artifacts. The linear_interpolation parameter will be removed in a future version.")
+        warnings.warn(
+            "linear_interpolation = False is deprecated due to deskewing artifacts. The linear_interpolation parameter will be removed in a future version."
+        )
 
-    from ._AffineTransform3D import AffineTransform3D
     from ._affine_transform import affine_transform
-    from ._affine_transform_deskew_3d import affine_transform_deskew_3d, DeskewDirection
+    from ._affine_transform_deskew_3d import (DeskewDirection,
+                                              affine_transform_deskew_3d)
+    from ._AffineTransform3D import AffineTransform3D
 
     # define affine transformation matrix
     transform = AffineTransform3D()
-    transform._deskew_y(angle_in_degrees=angle_in_degrees, voxel_size_x=voxel_size_x, voxel_size_y=voxel_size_y,
-                        voxel_size_z=voxel_size_z, scale_factor=scale_factor)
+    transform._deskew_y(
+        angle_in_degrees=angle_in_degrees,
+        voxel_size_x=voxel_size_x,
+        voxel_size_y=voxel_size_y,
+        voxel_size_z=voxel_size_z,
+        scale_factor=scale_factor,
+    )
 
     # apply transform using special affine transform method for deskewing in the Y direction
     if linear_interpolation:
-        return affine_transform_deskew_3d(source=input_image, destination=output_image,
-                                          transform=transform,
-                                          deskewing_angle_in_degrees=angle_in_degrees,
-                                          voxel_size_x=voxel_size_x,
-                                          voxel_size_y=voxel_size_y,
-                                          voxel_size_z=voxel_size_z,
-                                          deskew_direction=DeskewDirection.Y)
+        return affine_transform_deskew_3d(
+            source=input_image,
+            destination=output_image,
+            transform=transform,
+            deskewing_angle_in_degrees=angle_in_degrees,
+            voxel_size_x=voxel_size_x,
+            voxel_size_y=voxel_size_y,
+            voxel_size_z=voxel_size_z,
+            deskew_direction=DeskewDirection.Y,
+        )
     else:
-        return affine_transform(input_image, output_image, transform=transform, auto_size=True,
-                                linear_interpolation=False)
+        return affine_transform(
+            input_image,
+            output_image,
+            transform=transform,
+            auto_size=True,
+            linear_interpolation=False,
+        )

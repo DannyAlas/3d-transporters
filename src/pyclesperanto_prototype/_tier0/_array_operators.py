@@ -19,11 +19,12 @@ cl_buffer_datatype_dict = {
 
 _supported_numeric_types = tuple(cl_buffer_datatype_dict.keys())
 
-class ArrayOperators():
 
+class ArrayOperators:
     @property
     def T(self):
         from .._tier1 import transpose_xy, transpose_xz
+
         if len(self.shape) == 2:
             return transpose_xy(self)
         elif len(self.shape) == 3:
@@ -36,11 +37,11 @@ class ArrayOperators():
                               minimum_z_projection)
         from .._tier2 import minimum_of_all_pixels
 
-        if axis==0:
+        if axis == 0:
             result = minimum_z_projection(self)
-        elif axis==1:
+        elif axis == 1:
             result = minimum_y_projection(self)
-        elif axis==2:
+        elif axis == 2:
             result = minimum_x_projection(self)
         elif axis is None:
             result = minimum_of_all_pixels(self)
@@ -55,11 +56,11 @@ class ArrayOperators():
                               maximum_z_projection)
         from .._tier2 import maximum_of_all_pixels
 
-        if axis==0:
+        if axis == 0:
             result = maximum_z_projection(self)
-        elif axis==1:
+        elif axis == 1:
             result = maximum_y_projection(self)
-        elif axis==2:
+        elif axis == 2:
             result = maximum_x_projection(self)
         elif axis is None:
             result = maximum_of_all_pixels(self)
@@ -74,11 +75,11 @@ class ArrayOperators():
                               sum_z_projection)
         from .._tier2 import sum_of_all_pixels
 
-        if axis==0:
+        if axis == 0:
             result = sum_z_projection(self)
-        elif axis==1:
+        elif axis == 1:
             result = sum_y_projection(self)
-        elif axis==2:
+        elif axis == 2:
             result = sum_x_projection(self)
         elif axis is None:
             result = sum_of_all_pixels(self)
@@ -92,40 +93,51 @@ class ArrayOperators():
     #       For now tests fail if we remove them.
     def __iadd__(x1, x2):
         from .._tier1 import copy
+
         temp = copy(x1)
-        if isinstance(x2, _supported_numeric_types) :
+        if isinstance(x2, _supported_numeric_types):
             from .._tier1 import add_image_and_scalar
+
             return add_image_and_scalar(temp, x1, scalar=x2)
         else:
             from .._tier1 import add_images_weighted
+
             return add_images_weighted(temp, x2, x1)
 
     def __sub__(x1, x2):
         if isinstance(x2, _supported_numeric_types):
             from .._tier1 import add_image_and_scalar
+
             return add_image_and_scalar(x1, scalar=-x2)
         else:
             from .._tier1 import add_images_weighted
+
             return add_images_weighted(x1, x2, factor2=-1)
 
     def __div__(x1, x2):
         if isinstance(x2, _supported_numeric_types):
             from .._tier1 import multiply_image_and_scalar
+
             return multiply_image_and_scalar(x1, scalar=1.0 / x2)
         else:
             from .._tier1 import divide_images
+
             return divide_images(x1, x2)
+
     def __truediv__(x1, x2):
         return x1.__div__(x2)
 
     def __idiv__(x1, x2):
         from .._tier1 import copy
+
         temp = copy(x1)
         if isinstance(x2, _supported_numeric_types):
             from .._tier1 import multiply_image_and_scalar
+
             return multiply_image_and_scalar(temp, x1, scalar=1.0 / x2)
         else:
             from .._tier1 import divide_images
+
             return divide_images(temp, x2, x1)
 
     def __itruediv__(x1, x2):
@@ -134,91 +146,117 @@ class ArrayOperators():
     def __mul__(x1, x2):
         if isinstance(x2, _supported_numeric_types):
             from .._tier1 import multiply_image_and_scalar
+
             return multiply_image_and_scalar(x1, scalar=x2)
         else:
             from .._tier1 import multiply_images
+
             return multiply_images(x1, x2)
 
     def __imul__(x1, x2):
         from .._tier1 import copy
+
         temp = copy(x1)
         if isinstance(x2, _supported_numeric_types):
             from .._tier1 import multiply_image_and_scalar
+
             return multiply_image_and_scalar(temp, x1, scalar=x2)
         else:
             from .._tier1 import multiply_images
+
             return multiply_images(temp, x2, x1)
 
     def __gt__(x1, x2):
         if isinstance(x2, _supported_numeric_types):
             from .._tier1 import greater_constant
+
             return greater_constant(x1, constant=x2)
         else:
             from .._tier1 import greater
+
             return greater(x1, x2)
 
     def __ge__(x1, x2):
         if isinstance(x2, _supported_numeric_types):
             from .._tier1 import greater_or_equal_constant
+
             return greater_or_equal_constant(x1, constant=x2)
         else:
             from .._tier1 import greater_or_equal
+
             return greater_or_equal(x1, x2)
 
     def __lt__(x1, x2):
         if isinstance(x2, _supported_numeric_types):
             from .._tier1 import smaller_constant
+
             return smaller_constant(x1, constant=x2)
         else:
             from .._tier1 import smaller
+
             return smaller(x1, x2)
 
     def __le__(x1, x2):
         if isinstance(x2, _supported_numeric_types):
             from .._tier1 import smaller_or_equal_constant
+
             return smaller_or_equal_constant(x1, constant=x2)
         else:
             from .._tier1 import smaller_or_equal
+
             return smaller_or_equal(x1, x2)
 
     def __eq__(x1, x2):
         if isinstance(x2, _supported_numeric_types):
             from .._tier1 import equal_constant
+
             return equal_constant(x1, constant=x2)
         else:
             from .._tier1 import equal
+
             return equal(x1, x2)
 
     def __ne__(x1, x2):
         if isinstance(x2, _supported_numeric_types):
             from .._tier1 import not_equal_constant
+
             return not_equal_constant(x1, constant=x2)
         else:
             from .._tier1 import not_equal
+
             return not_equal(x1, x2)
 
     def __pow__(x1, x2):
         if isinstance(x2, _supported_numeric_types):
             from .._tier1 import power
+
             return power(x1, exponent=x2)
         else:
             from .._tier1 import power_images
+
             return power_images(x1, x2)
 
     def __ipow__(x1, x2):
         from .._tier1 import copy
+
         temp = copy(x1)
         if isinstance(x2, _supported_numeric_types):
             from .._tier1 import power
+
             return power(temp, x1, exponent=x2)
         else:
             from .._tier1 import power_images
+
             return power_images(temp, x2, x1)
 
     def __setitem__(self, index, value):
         if isinstance(index, list):
             index = tuple(index)
-        if isinstance(index, (tuple, np.ndarray)) and index[0] is not None and isinstance(index[0], (tuple, list, np.ndarray)):
+        if (
+            isinstance(index, (tuple, np.ndarray))
+            and index[0] is not None
+            and isinstance(index[0], (tuple, list, np.ndarray))
+        ):
             if len(index) == len(self.shape):
                 if len(index[0]) > 0:
                     # switch xy in 2D / xz in 3D, because clesperanto expects an X-Y-Z array;
@@ -227,18 +265,22 @@ class ArrayOperators():
                     index[0], index[-1] = index[-1], index[0]
                     # send coordinates to GPU
                     from ._push import push
+
                     coordinates = push(np.asarray(index))
                     num_coordinates = coordinates.shape[-1]
                     if isinstance(value, (int, float)):
                         # make an array containing new values for every pixel
                         number = value
                         from ._create import create
+
                         value = create((1, 1, num_coordinates))
                         from .._tier1 import set
+
                         set(value, number)
                     # overwrite pixels
                     from .._tier1 import write_values_to_positions
                     from .._tier2 import combine_vertically
+
                     values_and_positions = combine_vertically(coordinates, value)
                     write_values_to_positions(values_and_positions, self)
                 return
@@ -248,7 +290,11 @@ class ArrayOperators():
         result = None
         if isinstance(index, list):
             index = tuple(index)
-        if isinstance(index, (tuple, np.ndarray)) and index[0] is not None and isinstance(index[0], (tuple, list, np.ndarray)):
+        if (
+            isinstance(index, (tuple, np.ndarray))
+            and index[0] is not None
+            and isinstance(index[0], (tuple, list, np.ndarray))
+        ):
             if len(index) == len(self.shape):
                 if len(index[0]) > 0:
                     # switch xy in 2D / xz in 3D, because clesperanto expects an X-Y-Z array;
@@ -257,9 +303,11 @@ class ArrayOperators():
                     index[0], index[-1] = index[-1], index[0]
                     # send coordinates to GPU
                     from ._push import push
+
                     coordinates = push(np.asarray(index))
                     # read values from positions
                     from .._tier1 import read_intensities_from_positions
+
                     result = read_intensities_from_positions(coordinates, self)
                 else:
                     return []
@@ -317,30 +365,49 @@ class ArrayOperators():
                     eliminate_x = False
                     eliminate_y = False
                     eliminate_z = False
-                    if not isinstance(x_range, slice) and np.issubdtype(type(x_range), np.integer):
+                    if not isinstance(x_range, slice) and np.issubdtype(
+                        type(x_range), np.integer
+                    ):
                         x_range = slice(x_range, x_range + 1, 1)
                         eliminate_x = True
-                    if not isinstance(y_range, slice) and np.issubdtype(type(y_range), np.integer):
+                    if not isinstance(y_range, slice) and np.issubdtype(
+                        type(y_range), np.integer
+                    ):
                         y_range = slice(y_range, y_range + 1, 1)
                         eliminate_y = True
-                    if not isinstance(z_range, slice) and np.issubdtype(type(z_range), np.integer):
+                    if not isinstance(z_range, slice) and np.issubdtype(
+                        type(z_range), np.integer
+                    ):
                         z_range = slice(z_range, z_range + 1, 1)
                         eliminate_z = True
 
                     from .._tier1 import range as arange
-                    result = arange(self, start_x=x_range.start, stop_x=x_range.stop, step_x=x_range.step,
-                                   start_y=y_range.start, stop_y=y_range.stop, step_y=y_range.step,
-                                   start_z=z_range.start, stop_z=z_range.stop, step_z=z_range.step)
+
+                    result = arange(
+                        self,
+                        start_x=x_range.start,
+                        stop_x=x_range.stop,
+                        step_x=x_range.step,
+                        start_y=y_range.start,
+                        stop_y=y_range.stop,
+                        step_y=y_range.step,
+                        start_z=z_range.start,
+                        stop_z=z_range.stop,
+                        step_z=z_range.step,
+                    )
 
                     if (eliminate_x * 1) + (eliminate_y * 1) + (eliminate_z * 1) <= 1:
                         from .._tier0 import create
                         from .._tier1 import (copy, copy_horizontal_slice,
                                               copy_slice, copy_vertical_slice)
+
                         if eliminate_x:
                             output = create(result.shape[:2], self.dtype)
                             result = copy_vertical_slice(result, output)
                         if eliminate_y:
-                            output = create((result.shape[0],result.shape[2]), self.dtype)
+                            output = create(
+                                (result.shape[0], result.shape[2]), self.dtype
+                            )
                             result = copy_horizontal_slice(result, output)
                         if eliminate_z:
                             output = create(result.shape[1:], self.dtype)
@@ -363,7 +430,7 @@ class ArrayOperators():
         return result
 
     def __iter__(self):
-        class MyIterator():
+        class MyIterator:
             def __init__(self, image):
                 self.image = image
                 self._iter_index = 0
@@ -373,6 +440,7 @@ class ArrayOperators():
 
                 from .._tier0 import create
                 from .._tier1 import copy_slice
+
                 if not hasattr(self, "_iter_index"):
                     self._iter_index = 0
 
@@ -404,18 +472,17 @@ class ArrayOperators():
         import matplotlib.pyplot as plt
 
         with BytesIO() as file_obj:
-            plt.savefig(file_obj, format='png')
-            plt.close() # supress plot output
+            plt.savefig(file_obj, format="png")
+            plt.close()  # supress plot output
             file_obj.seek(0)
             png = file_obj.read()
         return png
 
-
     def _png_to_html(self, png):
         import base64
-        url = 'data:image/png;base64,' + base64.b64encode(png).decode('utf-8')
-        return f'<img src="{url}"></img>'
 
+        url = "data:image/png;base64," + base64.b64encode(png).decode("utf-8")
+        return f'<img src="{url}"></img>'
 
     def _repr_html_(self):
         """HTML representation of the image object for IPython.
@@ -429,23 +496,25 @@ class ArrayOperators():
 
         from .._tier9 import imshow
 
-
         size_in_pixels = np.prod(self.shape)
         size_in_bytes = size_in_pixels * self.dtype.itemsize
 
-        labels = (self.dtype == np.uint32)
+        labels = self.dtype == np.uint32
 
         # In case the image is 2D, 3D and larger than 100 pixels, turn on fancy view
         if len(self.shape) in (2, 3) and size_in_pixels >= 100:
             import matplotlib.pyplot as plt
-            imshow(self,
-                   labels=labels,
-                   continue_drawing=True,
-                   colorbar=not labels)
+
+            imshow(self, labels=labels, continue_drawing=True, colorbar=not labels)
             image = self._png_to_html(self._plt_to_png())
         else:
-            return "<pre>cle.array(" + str(np.asarray(self)) + ", dtype=" + str(self.dtype) + ")</pre>"
-
+            return (
+                "<pre>cle.array("
+                + str(np.asarray(self))
+                + ", dtype="
+                + str(self.dtype)
+                + ")</pre>"
+            )
 
         if size_in_bytes > 1024:
             size_in_bytes = size_in_bytes / 1024
@@ -489,8 +558,14 @@ class ArrayOperators():
 
                 histogram = self._png_to_html(self._plt_to_png())
 
-            min_max = "<tr><td>min</td><td>" + str(self.min()) + "</td></tr>" + \
-                      "<tr><td>max</td><td>" + str(self.max()) + "</td></tr>"
+            min_max = (
+                "<tr><td>min</td><td>"
+                + str(self.min())
+                + "</td></tr>"
+                + "<tr><td>max</td><td>"
+                + str(self.max())
+                + "</td></tr>"
+            )
 
         else:
 
@@ -502,10 +577,12 @@ class ArrayOperators():
             "<td>",
             image,
             "</td>",
-            "<td style=\"text-align: center; vertical-align: top;\">",
-            "<b><a href=\"https://github.com/clEsperanto/pyclesperanto_prototype\" target=\"_blank\">cle._</a> image</b><br/>",
+            '<td style="text-align: center; vertical-align: top;">',
+            '<b><a href="https://github.com/clEsperanto/pyclesperanto_prototype" target="_blank">cle._</a> image</b><br/>',
             "<table>",
-            "<tr><td>shape</td><td>" + str(self.shape).replace(" ", "&nbsp;") + "</td></tr>",
+            "<tr><td>shape</td><td>"
+            + str(self.shape).replace(" ", "&nbsp;")
+            + "</td></tr>",
             "<tr><td>dtype</td><td>" + str(self.dtype) + "</td></tr>",
             "<tr><td>size</td><td>" + size + "</td></tr>",
             min_max,

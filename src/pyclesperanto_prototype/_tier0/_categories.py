@@ -6,6 +6,7 @@ def categories():
     from inspect import getmembers, isfunction
 
     import pyclesperanto_prototype as cle
+
     ops = getmembers(cle, isfunction)
 
     cats = []

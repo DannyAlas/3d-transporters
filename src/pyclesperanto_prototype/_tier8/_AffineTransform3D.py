@@ -1,9 +1,11 @@
+import math
 from warnings import warn
 
 import numpy as np
 import transforms3d
-import math
+
 from ._utilities import shear_angle_to_shear_factor
+
 
 class AffineTransform3D:
     """This class is a convenience class to setup affine transform matrices.
@@ -16,19 +18,19 @@ class AffineTransform3D:
 
     """
 
-    def __init__(self, transform = None, image=None):
+    def __init__(self, transform=None, image=None):
         if transform is None:
             self._matrix = transforms3d.zooms.zfdir2aff(1)
         if isinstance(transform, AffineTransform3D):
             self._matrix = np.copy(transform._matrix)
         if isinstance(transform, str):
             from ._utilities import transform_from_string
+
             self._matrix = transform_from_string(transform, image)._matrix
 
-
-
-
-    def scale(self, scale_x: float = None, scale_y: float = None, scale_z: float = None):
+    def scale(
+        self, scale_x: float = None, scale_y: float = None, scale_z: float = None
+    ):
         """
         Scaling the current affine transform matrix.
 
@@ -47,24 +49,36 @@ class AffineTransform3D:
 
         """
         if scale_x == 0:
-            warn('scale_x must not be 0')
+            warn("scale_x must not be 0")
             scale_x = 1
         if scale_y == 0:
-            warn('scale_y must not be 0')
+            warn("scale_y must not be 0")
             scale_y = 1
         if scale_z == 0:
-            warn('scale_z must not be 0')
+            warn("scale_z must not be 0")
             scale_z = 1
         if scale_x is not None:
-            self._concatenate(transforms3d.zooms.zfdir2aff(scale_x, direction=(1, 0, 0), origin=(0, 0, 0)))
+            self._concatenate(
+                transforms3d.zooms.zfdir2aff(
+                    scale_x, direction=(1, 0, 0), origin=(0, 0, 0)
+                )
+            )
         if scale_y is not None:
-            self._concatenate(transforms3d.zooms.zfdir2aff(scale_y, direction=(0, 1, 0), origin=(0, 0, 0)))
+            self._concatenate(
+                transforms3d.zooms.zfdir2aff(
+                    scale_y, direction=(0, 1, 0), origin=(0, 0, 0)
+                )
+            )
         if scale_z is not None:
-            self._concatenate(transforms3d.zooms.zfdir2aff(scale_z, direction=(0, 0, 1), origin=(0, 0, 0)))
+            self._concatenate(
+                transforms3d.zooms.zfdir2aff(
+                    scale_z, direction=(0, 0, 1), origin=(0, 0, 0)
+                )
+            )
 
         return self
 
-    def rotate(self, axis : int = 2, angle_in_degrees : float = 0):
+    def rotate(self, axis: int = 2, angle_in_degrees: float = 0):
         """
         Rotation around a given axis (default: z-axis, meaning rotation in x-y-plane)
 
@@ -83,15 +97,21 @@ class AffineTransform3D:
         angle_in_rad = angle_in_degrees * np.pi / 180.0
 
         if axis == 0:
-            self._concatenate(self._3x3_to_4x4(transforms3d.euler.euler2mat(angle_in_rad, 0, 0)))
+            self._concatenate(
+                self._3x3_to_4x4(transforms3d.euler.euler2mat(angle_in_rad, 0, 0))
+            )
         if axis == 1:
-            self._concatenate(self._3x3_to_4x4(transforms3d.euler.euler2mat(0, angle_in_rad, 0)))
+            self._concatenate(
+                self._3x3_to_4x4(transforms3d.euler.euler2mat(0, angle_in_rad, 0))
+            )
         if axis == 2:
-            self._concatenate(self._3x3_to_4x4(transforms3d.euler.euler2mat(0, 0, angle_in_rad)))
+            self._concatenate(
+                self._3x3_to_4x4(transforms3d.euler.euler2mat(0, 0, angle_in_rad))
+            )
 
         return self
 
-    def rotate_around_x_axis(self, angle_in_degrees:float):
+    def rotate_around_x_axis(self, angle_in_degrees: float):
         """
         Rotation around the X-axis.
 
@@ -107,7 +127,7 @@ class AffineTransform3D:
         """
         return self.rotate(0, angle_in_degrees)
 
-    def rotate_around_y_axis(self, angle_in_degrees:float):
+    def rotate_around_y_axis(self, angle_in_degrees: float):
         """
         Rotation around the Y-axis.
 
@@ -123,7 +143,7 @@ class AffineTransform3D:
         """
         return self.rotate(1, angle_in_degrees)
 
-    def rotate_around_z_axis(self, angle_in_degrees:float):
+    def rotate_around_z_axis(self, angle_in_degrees: float):
         """
         Rotation around the Z-axis.
 
@@ -139,7 +159,9 @@ class AffineTransform3D:
         """
         return self.rotate(2, angle_in_degrees)
 
-    def translate(self, translate_x: float = 0, translate_y: float = 0, translate_z : float = 0):
+    def translate(
+        self, translate_x: float = 0, translate_y: float = 0, translate_z: float = 0
+    ):
         """Translation along axes.
 
         Parameters
@@ -156,15 +178,19 @@ class AffineTransform3D:
         self
 
         """
-        self._concatenate(np.asarray([
-            [1, 0, 0, translate_x],
-            [0, 1, 0, translate_y],
-            [0, 0, 1, translate_z],
-            [0, 0, 0, 1],
-        ]))
+        self._concatenate(
+            np.asarray(
+                [
+                    [1, 0, 0, translate_x],
+                    [0, 1, 0, translate_y],
+                    [0, 0, 1, translate_z],
+                    [0, 0, 0, 1],
+                ]
+            )
+        )
         return self
 
-    def center(self, shape, undo : bool = False):
+    def center(self, shape, undo: bool = False):
         """Change the center of the image to the root of the coordinate system
 
         Parameters
@@ -187,19 +213,20 @@ class AffineTransform3D:
 
         if len(shape) == 2:
             self.translate(
-                translate_x = presign * shape[1] / 2,
-                translate_y = presign * shape[0] / 2
+                translate_x=presign * shape[1] / 2, translate_y=presign * shape[0] / 2
             )
-        else: # 3 dimensional image
+        else:  # 3 dimensional image
             self.translate(
-                translate_x = presign * shape[2] / 2,
-                translate_y = presign * shape[1] / 2,
-                translate_z = presign * shape[0] / 2
+                translate_x=presign * shape[2] / 2,
+                translate_y=presign * shape[1] / 2,
+                translate_z=presign * shape[0] / 2,
             )
 
         return self
 
-    def shear_in_z_plane(self,angle_x_in_degrees: float = 0, angle_y_in_degrees: float = 0):
+    def shear_in_z_plane(
+        self, angle_x_in_degrees: float = 0, angle_y_in_degrees: float = 0
+    ):
         """Shear image in Z-plane (a.k.a. XY-plane) along X and/or Y direction.
 
         Angles need to be specified in degrees. To convert radians to degrees use this formula:
@@ -216,22 +243,32 @@ class AffineTransform3D:
         -------
         self
         """
-        assert(angle_x_in_degrees >=-90 and angle_x_in_degrees<=90), "shear angle must be between 90 and -90 degrees"
-        assert(angle_y_in_degrees >=-90 and angle_y_in_degrees<=90), "shear angle must be between 90 and -90 degrees"
+        assert (
+            angle_x_in_degrees >= -90 and angle_x_in_degrees <= 90
+        ), "shear angle must be between 90 and -90 degrees"
+        assert (
+            angle_y_in_degrees >= -90 and angle_y_in_degrees <= 90
+        ), "shear angle must be between 90 and -90 degrees"
 
         shear_factor_xz = shear_angle_to_shear_factor(angle_x_in_degrees)
         shear_factor_yz = shear_angle_to_shear_factor(angle_y_in_degrees)
 
         # shearing
-        self._pre_concatenate(np.asarray([
-            [1, shear_factor_xz, 0, 0],
-            [shear_factor_yz, 1, 0, 0],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1],
-        ]))
+        self._pre_concatenate(
+            np.asarray(
+                [
+                    [1, shear_factor_xz, 0, 0],
+                    [shear_factor_yz, 1, 0, 0],
+                    [0, 0, 1, 0],
+                    [0, 0, 0, 1],
+                ]
+            )
+        )
         return self
 
-    def shear_in_y_plane(self,angle_x_in_degrees: float = 0, angle_z_in_degrees: float = 0):
+    def shear_in_y_plane(
+        self, angle_x_in_degrees: float = 0, angle_z_in_degrees: float = 0
+    ):
         """Shear image in Y-plane (a.k.a. XZ-plane) along X and/or Z direction.
 
         Angles need to be specified in degrees. To convert radians to degrees use this formula:
@@ -248,22 +285,32 @@ class AffineTransform3D:
         -------
         self
         """
-        assert(angle_x_in_degrees >-90 and angle_x_in_degrees<90), "shear angle must be between 90 and -90 degrees"
-        assert(angle_z_in_degrees >-90 and angle_z_in_degrees<90), "shear angle must be between 90 and -90 degrees"
+        assert (
+            angle_x_in_degrees > -90 and angle_x_in_degrees < 90
+        ), "shear angle must be between 90 and -90 degrees"
+        assert (
+            angle_z_in_degrees > -90 and angle_z_in_degrees < 90
+        ), "shear angle must be between 90 and -90 degrees"
 
         shear_factor_xy = shear_angle_to_shear_factor(angle_x_in_degrees)
         shear_factor_zy = shear_angle_to_shear_factor(angle_z_in_degrees)
 
         # shearing
-        self._pre_concatenate(np.asarray([
-            [1, 0, shear_factor_xy, 0],
-            [0, 1, 0, 0],
-            [shear_factor_zy, 0, 1, 0],
-            [0, 0, 0, 1],
-        ]))
+        self._pre_concatenate(
+            np.asarray(
+                [
+                    [1, 0, shear_factor_xy, 0],
+                    [0, 1, 0, 0],
+                    [shear_factor_zy, 0, 1, 0],
+                    [0, 0, 0, 1],
+                ]
+            )
+        )
         return self
 
-    def shear_in_x_plane(self,angle_y_in_degrees: float = 0, angle_z_in_degrees: float = 0):
+    def shear_in_x_plane(
+        self, angle_y_in_degrees: float = 0, angle_z_in_degrees: float = 0
+    ):
         """Shear image in X-plane (a.k.a. YZ-plane) along Y and/or Z direction.
 
         Tip: This can be used for single objective lightsheet image reconstruction / deskewing.
@@ -283,29 +330,45 @@ class AffineTransform3D:
         -------
         self
         """
-        assert(angle_y_in_degrees >-90 and angle_y_in_degrees<90), "shear angle must be between 90 and -90 degrees"
-        assert(angle_z_in_degrees >-90 and angle_z_in_degrees<90), "shear angle must be between 90 and -90 degrees"
-        
+        assert (
+            angle_y_in_degrees > -90 and angle_y_in_degrees < 90
+        ), "shear angle must be between 90 and -90 degrees"
+        assert (
+            angle_z_in_degrees > -90 and angle_z_in_degrees < 90
+        ), "shear angle must be between 90 and -90 degrees"
+
         shear_factor_yx = shear_angle_to_shear_factor(angle_y_in_degrees)
         shear_factor_zx = shear_angle_to_shear_factor(angle_z_in_degrees)
 
         # shearing
-        self._pre_concatenate(np.asarray([
-            [1, 0, 0, 0],
-            [0, 1, shear_factor_yx, 0],
-            [0, shear_factor_zx, 1, 0],
-            [0, 0, 0, 1],
-        ]))
+        self._pre_concatenate(
+            np.asarray(
+                [
+                    [1, 0, 0, 0],
+                    [0, 1, shear_factor_yx, 0],
+                    [0, shear_factor_zx, 1, 0],
+                    [0, 0, 0, 1],
+                ]
+            )
+        )
         return self
 
-    def _deskew_y(self, angle_in_degrees:float, voxel_size_x: float = 1,
-                  voxel_size_y: float = 1, voxel_size_z: float = 1, scale_factor: float = 1):
+    def _deskew_y(
+        self,
+        angle_in_degrees: float,
+        voxel_size_x: float = 1,
+        voxel_size_y: float = 1,
+        voxel_size_z: float = 1,
+        scale_factor: float = 1,
+    ):
 
-        #Defining shear factor 
-        #Shear factor calculation here is different from that in utilities
-        shear_factor = math.sin((90 - angle_in_degrees) * math.pi / 180.0) * (voxel_size_z / voxel_size_y)
+        # Defining shear factor
+        # Shear factor calculation here is different from that in utilities
+        shear_factor = math.sin((90 - angle_in_degrees) * math.pi / 180.0) * (
+            voxel_size_z / voxel_size_y
+        )
         self._matrix[1, 2] = shear_factor
-        
+
         # make voxels isotropic, calculate the new scaling factor for Z after shearing
         # https://github.com/tlambert03/napari-ndtiffs/blob/092acbd92bfdbf3ecb1eb9c7fc146411ad9e6aae/napari_ndtiffs/affine.py#L57
         new_dz = math.sin(angle_in_degrees * math.pi / 180.0) * voxel_size_z
@@ -313,35 +376,42 @@ class AffineTransform3D:
         self.scale(scale_x=scale_factor, scale_y=scale_factor, scale_z=scale_factor_z)
 
         # correct orientation so that the new Z-plane goes proximal-distal from the objective.
-        self.rotate(angle_in_degrees = 0 - angle_in_degrees, axis=0)
+        self.rotate(angle_in_degrees=0 - angle_in_degrees, axis=0)
 
         return self
 
-    def _deskew_x(self, angle_in_degrees:float, voxel_size_x: float = 1,
-                  voxel_size_y: float = 1, voxel_size_z: float = 1, scale_factor: float = 1):
-        
-        #Defining shear factor 
-        #Shear factor calculation here is different from that in utilities
-        shear_factor = math.sin((90 - angle_in_degrees) * math.pi / 180.0) * (voxel_size_z / voxel_size_x)
+    def _deskew_x(
+        self,
+        angle_in_degrees: float,
+        voxel_size_x: float = 1,
+        voxel_size_y: float = 1,
+        voxel_size_z: float = 1,
+        scale_factor: float = 1,
+    ):
+
+        # Defining shear factor
+        # Shear factor calculation here is different from that in utilities
+        shear_factor = math.sin((90 - angle_in_degrees) * math.pi / 180.0) * (
+            voxel_size_z / voxel_size_x
+        )
         self._matrix[0, 2] = shear_factor
-        
-        #make voxels isotropic, calculate the new scaling factor for Z after shearing
-        #https://github.com/tlambert03/napari-ndtiffs/blob/092acbd92bfdbf3ecb1eb9c7fc146411ad9e6aae/napari_ndtiffs/affine.py#L57
+
+        # make voxels isotropic, calculate the new scaling factor for Z after shearing
+        # https://github.com/tlambert03/napari-ndtiffs/blob/092acbd92bfdbf3ecb1eb9c7fc146411ad9e6aae/napari_ndtiffs/affine.py#L57
         new_dz = math.sin(angle_in_degrees * math.pi / 180.0) * voxel_size_z
         scale_factor_z = (new_dz / voxel_size_x) * scale_factor
 
         self.scale(scale_x=scale_factor, scale_y=scale_factor, scale_z=scale_factor_z)
 
         # correct orientation so that the new Z-plane goes proximal-distal from the objective.
-        self.rotate(angle_in_degrees =  angle_in_degrees, axis=1)      
-        #self.rotate(angle_in_degrees =  180, axis=0)
+        self.rotate(angle_in_degrees=angle_in_degrees, axis=1)
+        # self.rotate(angle_in_degrees =  180, axis=0)
         return self
 
     def _3x3_to_4x4(self, matrix):
-        """Pads 3x3 affine transformation matrix to convert it to 4x4
-        """        
-        mat = np.pad(matrix,(0,1),'constant', constant_values = (0,0))
-        mat[3,3] = 1
+        """Pads 3x3 affine transformation matrix to convert it to 4x4"""
+        mat = np.pad(matrix, (0, 1), "constant", constant_values=(0, 0))
+        mat[3, 3] = 1
         return mat
 
     def concatenate(self, transform):

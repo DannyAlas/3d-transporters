@@ -1,7 +1,10 @@
-from .._tier0 import plugin_function, Image, create_labels_like
+from .._tier0 import Image, create_labels_like, plugin_function
 
-@plugin_function(categories=['label processing'], output_creator=create_labels_like)
-def merge_labels_according_to_touch_matrix(labels:Image, touch_matrix:Image, labels_destination:Image = None) -> Image:
+
+@plugin_function(categories=["label processing"], output_creator=create_labels_like)
+def merge_labels_according_to_touch_matrix(
+    labels: Image, touch_matrix: Image, labels_destination: Image = None
+) -> Image:
     """Merge labels in a label image as specified by a binary touch matrix.
 
     Parameters
@@ -15,10 +18,11 @@ def merge_labels_according_to_touch_matrix(labels:Image, touch_matrix:Image, lab
     labels_destination
     """
     from .._tier0 import create
-    from .._tier1 import multiply_images, set_ramp_y, maximum_y_projection, set_ramp_x, maximum_images, \
-       replace_intensities, transpose_xy, copy
-    from .._tier3 import relabel_sequential
+    from .._tier1 import (copy, maximum_images, maximum_y_projection,
+                          multiply_images, replace_intensities, set_ramp_x,
+                          set_ramp_y, transpose_xy)
     from .._tier2 import symmetric_maximum_matrix
+    from .._tier3 import relabel_sequential
     from ._array_equal import array_equal
 
     touch_matrix = symmetric_maximum_matrix(touch_matrix)

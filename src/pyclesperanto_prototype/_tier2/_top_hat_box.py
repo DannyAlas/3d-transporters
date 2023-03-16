@@ -1,14 +1,19 @@
-from .._tier0 import create
-from .._tier1 import minimum_box
-from .._tier1 import maximum_box
-from .._tier1 import add_images_weighted
-from .._tier0 import plugin_function
-from .._tier0 import Image
+from .._tier0 import Image, create, plugin_function
+from .._tier1 import add_images_weighted, maximum_box, minimum_box
 
-@plugin_function(categories=['filter', 'background removal', 'in assistant'], priority=1)
-def top_hat_box(source : Image, destination : Image = None, radius_x : float = 1, radius_y : float = 1, radius_z : float = 1) -> Image:
+
+@plugin_function(
+    categories=["filter", "background removal", "in assistant"], priority=1
+)
+def top_hat_box(
+    source: Image,
+    destination: Image = None,
+    radius_x: float = 1,
+    radius_y: float = 1,
+    radius_z: float = 1,
+) -> Image:
     """Applies a top-hat filter for background subtraction to the input image.
-    
+
     Parameters
     ----------
     source : Image
@@ -21,21 +26,20 @@ def top_hat_box(source : Image, destination : Image = None, radius_x : float = 1
         Radius of the background determination region in Y.
     radius_z : Image, optional
         Radius of the background determination region in Z.
-    
+
     Returns
     -------
     destination
-    
+
     Examples
     --------
     >>> import pyclesperanto_prototype as cle
     >>> cle.top_hat_box(input, destination, radiusX, radiusY, radiusZ)
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_topHatBox
     """
-
 
     temp1 = create(source.shape)
     temp2 = create(source.shape)

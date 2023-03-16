@@ -12,7 +12,8 @@ from ._pycl import _OCLImage
 
 if not os.getenv("PYOPENCL_COMPILER_OUTPUT"):
     import warnings
-    warnings.filterwarnings('ignore', 'Non-empty compiler output', module='pyopencl')
+
+    warnings.filterwarnings("ignore", "Non-empty compiler output", module="pyopencl")
 
 
 # should write a test to make sure kernels and filenames always match
@@ -45,13 +46,16 @@ def get_ocl_source(anchor, opencl_kernel_filename):
     else:
         exp_tier = re.compile(r"_tier")
         if exp_tier.search(str(Path(anchor).parent)):
-            try: 
-                kernel = (Path(anchor).parent.parent / opencl_kernel_filename).read_text()
+            try:
+                kernel = (
+                    Path(anchor).parent.parent / opencl_kernel_filename
+                ).read_text()
             except:
                 kernel = (Path(anchor).parent / opencl_kernel_filename).read_text()
         else:
             kernel = (Path(anchor).parent / opencl_kernel_filename).read_text()
     return "\n".join([preamble(), kernel])
+
 
 COMMON_HEADER = """
 #define CONVERT_{key}_PIXEL_TYPE clij_convert_{pixel_type}_sat
@@ -66,19 +70,36 @@ SIZE_HEADER = """
 #define IMAGE_SIZE_{key}_DEPTH {depth}
 """
 
-ARRAY_HEADER = COMMON_HEADER + """
+ARRAY_HEADER = (
+    COMMON_HEADER
+    + """
 #define IMAGE_{key}_TYPE {size_parameters} __global {pixel_type}*
 #define READ_{key}_IMAGE(a,b,c) read_buffer{img_dims}d{typeId}(GET_IMAGE_WIDTH(a),GET_IMAGE_HEIGHT(a),GET_IMAGE_DEPTH(a),a,b,c)
 #define WRITE_{key}_IMAGE(a,b,c) write_buffer{img_dims}d{typeId}(GET_IMAGE_WIDTH(a),GET_IMAGE_HEIGHT(a),GET_IMAGE_DEPTH(a),a,b,c)
 """
+)
 
-IMAGE_HEADER = COMMON_HEADER + """
+IMAGE_HEADER = (
+    COMMON_HEADER
+    + """
 #define IMAGE_{key}_TYPE {size_parameters} {type_name} 
 #define READ_{key}_IMAGE(a,b,c) read_image{typeId}(a,b,c)
 #define WRITE_{key}_IMAGE(a,b,c) write_image{typeId}(a,b,c)
 """
+)
 
-def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters, prog : OCLProgram = None, constants = None, image_size_independent_kernel_compilation : bool = None, device: Device = None):
+
+def execute(
+    anchor,
+    opencl_kernel_filename,
+    kernel_name,
+    global_size,
+    parameters,
+    prog: OCLProgram = None,
+    constants=None,
+    image_size_independent_kernel_compilation: bool = None,
+    device: Device = None,
+):
     """
     Convenience method for calling opencl kernel files
     This method basically does the same as the CLKernelExecutor in CLIJ:
@@ -107,24 +128,27 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
     if image_size_independent_kernel_compilation != None:
         warnings.warn(
             "The `image_size_independent_kernel_compilation` parameter of pyclesperanto_prototype.execute is deprecated since 0.11.0. It will be removed in 0.12.0.",
-            DeprecationWarning
+            DeprecationWarning,
         )
     else:
         image_size_independent_kernel_compilation = True
 
-
     if image_size_independent_kernel_compilation:
-        defines.extend([
-            "#define GET_IMAGE_WIDTH(image_key) image_size_ ## image_key ## _width",
-            "#define GET_IMAGE_HEIGHT(image_key) image_size_ ## image_key ## _height",
-            "#define GET_IMAGE_DEPTH(image_key) image_size_ ## image_key ## _depth"
-        ])
+        defines.extend(
+            [
+                "#define GET_IMAGE_WIDTH(image_key) image_size_ ## image_key ## _width",
+                "#define GET_IMAGE_HEIGHT(image_key) image_size_ ## image_key ## _height",
+                "#define GET_IMAGE_DEPTH(image_key) image_size_ ## image_key ## _depth",
+            ]
+        )
     else:
-        defines.extend([
-            "#define GET_IMAGE_WIDTH(image_key) IMAGE_SIZE_ ## image_key ## _WIDTH",
-            "#define GET_IMAGE_HEIGHT(image_key) IMAGE_SIZE_ ## image_key ## _HEIGHT",
-            "#define GET_IMAGE_DEPTH(image_key) IMAGE_SIZE_ ## image_key ## _DEPTH"
-        ])
+        defines.extend(
+            [
+                "#define GET_IMAGE_WIDTH(image_key) IMAGE_SIZE_ ## image_key ## _WIDTH",
+                "#define GET_IMAGE_HEIGHT(image_key) IMAGE_SIZE_ ## image_key ## _HEIGHT",
+                "#define GET_IMAGE_DEPTH(image_key) IMAGE_SIZE_ ## image_key ## _DEPTH",
+            ]
+        )
 
     if constants is not None:
         for key, value in constants.items():
@@ -163,7 +187,9 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
                 pixel_type = "float"
                 type_id = "f"
             else:
-                raise TypeError(f"Type {value.dtype} is currently unsupported for buffers/arrays")
+                raise TypeError(
+                    f"Type {value.dtype} is currently unsupported for buffers/arrays"
+                )
 
             # image type handling
             depth_height_width = [1, 1, 1]
@@ -172,9 +198,17 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
             ndim = value.ndim
 
             if image_size_independent_kernel_compilation:
-                size_parameters = "int image_size_" + key + "_width" + \
-                                  ", int image_size_" + key + "_height" + \
-                                  ", int image_size_" + key + "_depth, "
+                size_parameters = (
+                    "int image_size_"
+                    + key
+                    + "_width"
+                    + ", int image_size_"
+                    + key
+                    + "_height"
+                    + ", int image_size_"
+                    + key
+                    + "_depth, "
+                )
 
                 arguments.append(np.array([int(width)], np.int32))
                 arguments.append(np.array([int(height)], np.int32))
@@ -183,7 +217,6 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
                 size_parameters = ""
 
             arguments.append(value.base_data)
-
 
             params = {
                 "typeId": type_id,
@@ -194,14 +227,13 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
                 "depth": depth,
                 "height": height,
                 "width": width,
-                "size_parameters":size_parameters,
-                "pixel_type":pixel_type
+                "size_parameters": size_parameters,
+                "pixel_type": pixel_type,
             }
             defines.extend(ARRAY_HEADER.format(**params).split("\n"))
 
             if not image_size_independent_kernel_compilation:
                 defines.extend(SIZE_HEADER.format(**params).split("\n"))
-
 
         elif isinstance(value, _OCLImage):
 
@@ -233,7 +265,9 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
                 pixel_type = "float"
                 type_id = "f"
             else:
-                raise TypeError(f"Type {value.dtype} is currently unsupported for buffers/arrays")
+                raise TypeError(
+                    f"Type {value.dtype} is currently unsupported for buffers/arrays"
+                )
 
             # image type handling
             depth_height_width = [1, 1, 1]
@@ -242,9 +276,17 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
             ndim = len(value.shape)
 
             if image_size_independent_kernel_compilation:
-                size_parameters = "int image_size_" + key + "_width" + \
-                                  ", int image_size_" + key + "_height" + \
-                                  ", int image_size_" + key + "_depth, "
+                size_parameters = (
+                    "int image_size_"
+                    + key
+                    + "_width"
+                    + ", int image_size_"
+                    + key
+                    + "_height"
+                    + ", int image_size_"
+                    + key
+                    + "_depth, "
+                )
                 arguments.append(np.array([int(width)], np.int32))
                 arguments.append(np.array([int(height)], np.int32))
                 arguments.append(np.array([int(depth)], np.int32))
@@ -259,7 +301,7 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
                 type_name = "__read_only image" + str(ndim) + "d_t"
 
             params = {
-                "typeId": type_id, # can alternatively only be ui
+                "typeId": type_id,  # can alternatively only be ui
                 "type_name": type_name,
                 "key": key,
                 "pos_type": "int2" if ndim < 3 else "int4",
@@ -268,8 +310,8 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
                 "depth": depth,
                 "height": height,
                 "width": width,
-                "size_parameters":size_parameters,
-                "pixel_type":pixel_type
+                "size_parameters": size_parameters,
+                "pixel_type": pixel_type,
             }
             defines.extend(IMAGE_HEADER.format(**params).split("\n"))
             if not image_size_independent_kernel_compilation:
@@ -309,22 +351,23 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
 
         if device is None:
             from ._device import get_device
+
             device = get_device()
         else:
             warnings.warn(
                 "The `device` parameter of pyclesperanto_prototype.execute is deprecated since 0.11.0. It will be removed in 0.12.0.",
-                DeprecationWarning
+                DeprecationWarning,
             )
 
         prog = device.program_from_source("\n".join(defines))
-        #prog = OCLProgram.from_source("\n".join(defines))
+        # prog = OCLProgram.from_source("\n".join(defines))
 
         # Todo: the order of the arguments matters; fix that
         # print("Compilation " + opencl_kernel_filename + " took " + str((time.time() - time_stamp) * 1000) + " ms")
     else:
         warnings.warn(
             "The `prog` parameter of pyclesperanto_prototype.execute is deprecated since 0.11.0. It will be removed in 0.12.0.",
-            DeprecationWarning
+            DeprecationWarning,
         )
 
     prog.run_kernel(kernel_name, tuple(global_size[::-1]), None, *arguments)

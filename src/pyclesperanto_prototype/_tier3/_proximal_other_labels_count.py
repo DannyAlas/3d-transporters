@@ -1,8 +1,18 @@
-from .._tier0 import plugin_function, Image, create_none
 import numpy as np
 
-@plugin_function(categories=['label measurement', 'combine', 'map', 'label comparison'], output_creator=create_none)
-def proximal_other_labels_count(label_image:Image, other_label_image:Image, count_vector:Image = None, maximum_distance:float = 25) -> Image:
+from .._tier0 import Image, create_none, plugin_function
+
+
+@plugin_function(
+    categories=["label measurement", "combine", "map", "label comparison"],
+    output_creator=create_none,
+)
+def proximal_other_labels_count(
+    label_image: Image,
+    other_label_image: Image,
+    count_vector: Image = None,
+    maximum_distance: float = 25,
+) -> Image:
     """
     Count number of labels within a given radius in an other label image and returns the result as vector.
 
@@ -25,8 +35,10 @@ def proximal_other_labels_count(label_image:Image, other_label_image:Image, coun
     count_vector
 
     """
+    from .._tier1 import (generate_distance_matrix, set_column, set_row,
+                          smaller_or_equal_constant, sum_y_projection)
     from .._tier9 import centroids_of_labels
-    from .._tier1 import generate_distance_matrix, set_row, set_column, smaller_or_equal_constant, sum_y_projection
+
     centroids_a = centroids_of_labels(label_image)
     centroids_b = centroids_of_labels(other_label_image)
 
@@ -37,7 +49,9 @@ def proximal_other_labels_count(label_image:Image, other_label_image:Image, coun
     set_column(distance_matrix, 0, np.finfo(np.float32).max)
 
     # threshold matrix
-    binary_matrix = smaller_or_equal_constant(distance_matrix, constant=maximum_distance)
+    binary_matrix = smaller_or_equal_constant(
+        distance_matrix, constant=maximum_distance
+    )
 
     # count objects in each column of that matrix
     count_vector = sum_y_projection(binary_matrix, count_vector)

@@ -1,17 +1,21 @@
-from .._tier0 import plugin_function
-from .._tier0 import Image
-from .. import smaller_constant, greater_constant, binary_or
-from .._tier0 import create_none
-from .._tier0 import create_like
+from .. import binary_or, greater_constant, smaller_constant
+from .._tier0 import Image, create_like, create_none, plugin_function
 
-@plugin_function(output_creator=create_none, categories=['label processing', 'combine'])
-def exclude_labels_with_values_out_of_range(values_vector : Image, label_map_input : Image, label_map_destination : Image = None, minimum_value_range : float = 0, maximum_value_range : float = 100) -> Image:
-    """This operation removes labels from a labelmap and renumbers the 
-    remaining labels. 
-    
-    Hand over a vector of values and a range specifying which labels with which 
-    values are eliminated. 
-    
+
+@plugin_function(output_creator=create_none, categories=["label processing", "combine"])
+def exclude_labels_with_values_out_of_range(
+    values_vector: Image,
+    label_map_input: Image,
+    label_map_destination: Image = None,
+    minimum_value_range: float = 0,
+    maximum_value_range: float = 100,
+) -> Image:
+    """This operation removes labels from a labelmap and renumbers the
+    remaining labels.
+
+    Hand over a vector of values and a range specifying which labels with which
+    values are eliminated.
+
     Parameters
     ----------
     values_vector : Image
@@ -19,11 +23,11 @@ def exclude_labels_with_values_out_of_range(values_vector : Image, label_map_inp
     label_map_destination : Image, optional
     minimum_value_range : Number, optional
     maximum_value_range : Number, optional
-    
+
     Returns
     -------
     label_map_destination
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_excludeLabelsWithValuesOutOfRange
@@ -38,6 +42,9 @@ def exclude_labels_with_values_out_of_range(values_vector : Image, label_map_inp
     binary_or(below, above, flaglist_vector)
 
     from .._tier3 import exclude_labels
-    label_map_destination = exclude_labels(flaglist_vector, label_map_input, label_map_destination)
+
+    label_map_destination = exclude_labels(
+        flaglist_vector, label_map_input, label_map_destination
+    )
 
     return label_map_destination

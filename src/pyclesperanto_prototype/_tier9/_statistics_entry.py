@@ -1,11 +1,13 @@
 from enum import Enum
 
+
 class STATISTICS_ENTRY(Enum):
     """This enum allows to access a specific column in a measurement table corresponding to a specific measurement.
     It is the python counter part for the Java version in CLIJ2:
     https://github.com/clij/clij2/blob/master/src/main/java/net/haesleinhuepf/clij2/plugins/StatisticsOfLabelledPixels.java#L30
-    
+
     """
+
     IDENTIFIER = 0
     BOUNDING_BOX_X = 1
     BOUNDING_BOX_Y = 2

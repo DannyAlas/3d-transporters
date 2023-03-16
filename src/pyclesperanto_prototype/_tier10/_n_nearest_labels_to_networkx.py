@@ -1,4 +1,5 @@
 import numpy as np
+
 from .._tier0 import Image
 
 
@@ -17,12 +18,14 @@ def n_nearest_labels_to_networkx(label_image: Image, n: int = 1):
     -------
     networkx Graph
     """
-    from .._tier9 import centroids_of_labels
     from .._tier1 import generate_distance_matrix
     from .._tier3 import generate_n_nearest_neighbors_matrix
+    from .._tier9 import centroids_of_labels
     from ._to_networkx import to_networkx
 
     centroids = centroids_of_labels(label_image)
     distance_matrix = generate_distance_matrix(centroids, centroids)
-    n_nearest_neighbor_matrix = generate_n_nearest_neighbors_matrix(distance_matrix, n=n)
+    n_nearest_neighbor_matrix = generate_n_nearest_neighbors_matrix(
+        distance_matrix, n=n
+    )
     return to_networkx(n_nearest_neighbor_matrix, centroids)

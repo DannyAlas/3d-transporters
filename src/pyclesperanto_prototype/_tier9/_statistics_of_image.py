@@ -1,8 +1,8 @@
-from .._tier0 import Image
-from .._tier0 import plugin_function
+from .._tier0 import Image, plugin_function
+
 
 @plugin_function
-def statistics_of_image(image : Image):
+def statistics_of_image(image: Image):
     """Determines image size (bounding box), area (in pixels/voxels), min, max, mean and standard deviation of the
     intensity of all pixels in the original image.
 

@@ -14,18 +14,11 @@ from napari import Viewer
 from napari.types import ImageData, LabelsData
 from nd2reader import ND2Reader
 from skimage.exposure import rescale_intensity
-from skimage.filters import (
-    gaussian,
-    threshold_isodata,
-    threshold_li,
-    threshold_mean,
-    threshold_minimum,
-    threshold_otsu,
-    threshold_triangle,
-    threshold_yen,
-)
+from skimage.filters import (gaussian, threshold_isodata, threshold_li,
+                             threshold_mean, threshold_minimum, threshold_otsu,
+                             threshold_triangle, threshold_yen)
 from skimage.io import imsave
-from skimage.measure import label, regionprops_table, regionprops
+from skimage.measure import label, regionprops, regionprops_table
 from skimage.morphology import local_maxima
 from skimage.segmentation import watershed as _watershed
 from skimage.util import img_as_ubyte
@@ -48,26 +41,29 @@ THRESH_METHODS = {
 
 FAILED = {}
 
+
 class _layers:
     def __iter__(self):
         for attr, value in self.__dict__.items():
-            if not attr.startswith('__') and not callable(attr):
-                yield value 
+            if not attr.startswith("__") and not callable(attr):
+                yield value
 
     @property
     def layers(self):
         return [layer for layer in self]
-    
+
     def add_layer(self, data, name="layer"):
         setattr(self, name, _layer(name, data))
 
     def remove_layer(self, name):
         delattr(self, name)
 
+
 class _layer:
     def __init__(self, name, data):
         self.name = name
         self.data = data
+
 
 def voronoi_otsu_labeling(
     image: ImageData, spot_sigma: float = 2, outline_sigma: float = 2
@@ -224,8 +220,11 @@ def create_threshold_hist_plot(image: np.ndarray, file):
         fig.suptitle("Thresholding methods", fontsize=16)
     except Exception as e:
         try:
-            logger.error(f"Failed to create threshold histogram plot because {e}. Trying skimage's try_all_threshold")
+            logger.error(
+                f"Failed to create threshold histogram plot because {e}. Trying skimage's try_all_threshold"
+            )
             from skimage.filters import try_all_threshold
+
             fig, axes = try_all_threshold(image, figsize=(20, 5), verbose=False)
             fig.suptitle("Thresholding methods", fontsize=16)
         except Exception as e:
@@ -247,13 +246,16 @@ def create_threshold_hist_plot(image: np.ndarray, file):
 
     return fig, "Otsu"
 
-from typing import NewType, Dict
+
+from typing import Dict, NewType
 
 layers = NewType("layers", Dict[str, np.ndarray])
+
 
 class layers:
     name = "test"
     data = None
+
 
 def create_threshold_plot(viewer: _layers, file: str):
     for layer in viewer:
@@ -350,8 +352,10 @@ def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
         # get the VGluT3
         elif layer.name == "VGluT3_labels":
             vglut3_labels = layer.data
-        
-    assert vgat_labels is not None and gfp_binary is not None and vglut3_labels is not None, "VGaT, GFP and VGluT3 layers are required for colocalization calculation."
+
+    assert (
+        vgat_labels is not None and gfp_binary is not None and vglut3_labels is not None
+    ), "VGaT, GFP and VGluT3 layers are required for colocalization calculation."
 
     properties = ("label", "mean_intensity", "area", "bbox")
     props = regionprops_table(vgat_labels, gfp_binary, properties=properties)
@@ -391,13 +395,17 @@ def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
     file_name = os.path.basename(file)
     colo_vgat_gfp_table.to_csv(
         os.path.join(
-            os.path.dirname(file), file_name.split(".")[0], f"{file_name.split('.')[0]}_VGaT_colocalization.csv"
+            os.path.dirname(file),
+            file_name.split(".")[0],
+            f"{file_name.split('.')[0]}_VGaT_colocalization.csv",
         ),
         index=False,
     )
     colo_vglut_gfp_table.to_csv(
         os.path.join(
-            os.path.dirname(file), file_name.split(".")[0], f"{file_name.split('.')[0]}_VGluT3_colocalization.csv"
+            os.path.dirname(file),
+            file_name.split(".")[0],
+            f"{file_name.split('.')[0]}_VGluT3_colocalization.csv",
         ),
         index=False,
     )
@@ -413,7 +421,9 @@ def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
     ax.set_xlabel("VGaT and VGluT3")
     plt.savefig(
         os.path.join(
-            os.path.dirname(file), file_name.split(".")[0], f"{file_name.split('.')[0]}colocalization_amount.png"
+            os.path.dirname(file),
+            file_name.split(".")[0],
+            f"{file_name.split('.')[0]}colocalization_amount.png",
         )
     )
 
@@ -431,31 +441,35 @@ def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
     ax.set_xlabel("VGaT and VGluT3")
     plt.savefig(
         os.path.join(
-            os.path.dirname(file), file_name.split(".")[0], f"{file_name.split('.')[0]}colocalization_size.png"
+            os.path.dirname(file),
+            file_name.split(".")[0],
+            f"{file_name.split('.')[0]}colocalization_size.png",
         )
     )
-    
 
-    
 
 cant_process = []
+
+
 def runner(file: str):
-    
+
     with ND2Reader(file) as images:
-            metadata = images.metadata
-            viewer = _layers()
+        metadata = images.metadata
+        viewer = _layers()
 
-            for i, channel in enumerate(metadata['channels']):
-                try:
-                    data = np.zeros((images.sizes['z'], images.sizes['x'], images.sizes['y']))
-                    for t in range(images.sizes['z']):
-                        data[t,:,:] = images.get_frame_2D(c=i, z=t)
+        for i, channel in enumerate(metadata["channels"]):
+            try:
+                data = np.zeros(
+                    (images.sizes["z"], images.sizes["x"], images.sizes["y"])
+                )
+                for t in range(images.sizes["z"]):
+                    data[t, :, :] = images.get_frame_2D(c=i, z=t)
 
-                    viewer.add_layer(data, name=channel)
+                viewer.add_layer(data, name=channel)
 
-                except KeyError as e:
-                    cant_process.append(file)
-                    return
+            except KeyError as e:
+                cant_process.append(file)
+                return
 
     for layer in viewer:
         if layer.name == "TRITC":
@@ -464,7 +478,6 @@ def runner(file: str):
             layer.name = "EGFP"
         elif layer.name == "Cy5":
             layer.name = "VGluT3"
-
 
     best_tresh = create_threshold_plot(viewer, file)
 
@@ -475,7 +488,6 @@ def runner(file: str):
 
     # calculate the colocalization
     calculate_colocalization(viewer, metadata, file)
-
 
 
 def main(dir: str):

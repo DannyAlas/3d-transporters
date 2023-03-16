@@ -1,9 +1,10 @@
-from .._tier0 import execute
-from .._tier0 import plugin_function
-from .._tier0 import Image
+from .._tier0 import Image, execute, plugin_function
+
 
 @plugin_function
-def mode_of_touching_neighbors(src_values : Image, touch_matrix : Image, dst_values : Image = None) -> Image:
+def mode_of_touching_neighbors(
+    src_values: Image, touch_matrix: Image, dst_values: Image = None
+) -> Image:
     """Determines the most popular value of labeled neighboring objects for each object.
 
     Parameters
@@ -31,9 +32,15 @@ def mode_of_touching_neighbors(src_values : Image, touch_matrix : Image, dst_val
         "src_values": src_values,
         "src_touch_matrix": touch_matrix,
         "dst_values": dst_values,
-        "x_correction": int(x_correction)
+        "x_correction": int(x_correction),
     }
 
-    execute(__file__, 'clij-opencl-kernels/kernels/mode_of_touching_neighbors_x.cl', 'mode_of_touching_neighbors', dst_values.shape, parameters)
+    execute(
+        __file__,
+        "clij-opencl-kernels/kernels/mode_of_touching_neighbors_x.cl",
+        "mode_of_touching_neighbors",
+        dst_values.shape,
+        parameters,
+    )
 
     return dst_values

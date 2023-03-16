@@ -1,7 +1,12 @@
-from .._tier0 import plugin_function, Image, create_labels_like
+from .._tier0 import Image, create_labels_like, plugin_function
 
-@plugin_function(categories=['label processing', 'in assistant'], output_creator=create_labels_like)
-def merge_touching_labels(labels_input: Image, labels_destination: Image = None) -> Image:
+
+@plugin_function(
+    categories=["label processing", "in assistant"], output_creator=create_labels_like
+)
+def merge_touching_labels(
+    labels_input: Image, labels_destination: Image = None
+) -> Image:
     """
     Takes a label image, determines which labels are touching, merges them, renumbers them and produces a new label
     image.
@@ -19,18 +24,12 @@ def merge_touching_labels(labels_input: Image, labels_destination: Image = None)
     --------
     ..[1] https://clij.github.io/clij2-docs/reference_mergeTouchingLabels
     """
-    from .._tier1 import generate_touch_matrix
-    from .._tier1 import set_ramp_y
-    from .._tier1 import transpose_xy
     from .._tier0 import create
-    from .._tier1 import binary_or
-    from .._tier1 import set_where_x_equals_y
-    from .._tier1 import set_column
-    from .._tier1 import set_row
-    from .._tier1 import multiply_images
-    from .._tier1 import maximum_y_projection
+    from .._tier1 import (binary_or, generate_touch_matrix,
+                          maximum_y_projection, multiply_images,
+                          replace_intensities, set_column, set_ramp_y, set_row,
+                          set_where_x_equals_y, transpose_xy)
     from .._tier3 import relabel_sequential
-    from .._tier1 import replace_intensities
 
     # touch matrices are half-filled. The upper right corner is empth
     touch_matrix = generate_touch_matrix(labels_input)
@@ -58,7 +57,9 @@ def merge_touching_labels(labels_input: Image, labels_destination: Image = None)
     new_labels = relabel_sequential(label_id_vector)
 
     # write the new labels into the label image
-    labels_destination = replace_intensities(labels_input, new_labels, labels_destination)
+    labels_destination = replace_intensities(
+        labels_input, new_labels, labels_destination
+    )
 
     # todo: the following might be suboptimal with regard to performance.
     #       Check if there is a faster way of doing this, e.g. in the lines above.
@@ -67,11 +68,13 @@ def merge_touching_labels(labels_input: Image, labels_destination: Image = None)
     set_row(touch_matrix2, 0, 0)
     set_column(touch_matrix2, 0, 0)
     from .._tier2 import sum_of_all_pixels
+
     num_touches = sum_of_all_pixels(touch_matrix2)
 
     # if so, merge again
     if num_touches > 0:
         from .._tier1 import copy
+
         temp = copy(labels_destination)
         merge_touching_labels(temp, labels_destination)
 

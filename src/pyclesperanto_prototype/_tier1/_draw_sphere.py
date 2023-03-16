@@ -1,17 +1,23 @@
-from .._tier0 import execute
+from .._tier0 import Image, execute, plugin_function
 
-
-from .._tier0 import plugin_function
-from .._tier0 import Image
 
 @plugin_function
-def draw_sphere(destination : Image, x : float = 0, y : float = 0, z : float = 0, radius_x : float = 1, radius_y : float = 1, radius_z : float = 1, value : float = 1) -> Image:
-    """Draws a sphere around a given point with given radii in x, y and z (if 
-    3D). 
-    
-     All pixels other than in the sphere are untouched. Consider using 
-    `set(buffer, 0);` in advance. 
-    
+def draw_sphere(
+    destination: Image,
+    x: float = 0,
+    y: float = 0,
+    z: float = 0,
+    radius_x: float = 1,
+    radius_y: float = 1,
+    radius_z: float = 1,
+    value: float = 1,
+) -> Image:
+    """Draws a sphere around a given point with given radii in x, y and z (if
+    3D).
+
+     All pixels other than in the sphere are untouched. Consider using
+    `set(buffer, 0);` in advance.
+
     Parameters
     ----------
     destination : Image
@@ -22,23 +28,22 @@ def draw_sphere(destination : Image, x : float = 0, y : float = 0, z : float = 0
     radius_y : Number, optional
     radius_z : Number, optional
     value : Number, optional
-    
+
     Returns
     -------
     destination
-    
+
     Examples
     --------
     >>> import pyclesperanto_prototype as cle
     >>> cle.draw_sphere(destination, x, y, z, radius_x, radius_y, radius_z, value)
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_drawSphere
     """
 
-
-    if (len(destination.shape) == 2):
+    if len(destination.shape) == 2:
         parameters = {
             "dst": destination,
             "cx": float(x),
@@ -47,9 +52,9 @@ def draw_sphere(destination : Image, x : float = 0, y : float = 0, z : float = 0
             "ry": float(radius_y),
             "rxsq": float(radius_x * radius_x),
             "rysq": float(radius_y * radius_y),
-            "value": float(value)
+            "value": float(value),
         }
-    else: # 3D
+    else:  # 3D
         parameters = {
             "dst": destination,
             "cx": float(x),
@@ -61,8 +66,16 @@ def draw_sphere(destination : Image, x : float = 0, y : float = 0, z : float = 0
             "rxsq": float(radius_x * radius_x),
             "rysq": float(radius_y * radius_y),
             "rzsq": float(radius_z * radius_z),
-            "value": float(value)
+            "value": float(value),
         }
 
-    execute(__file__, 'clij-opencl-kernels/kernels/draw_sphere_' + str(len(destination.shape)) + 'd_x.cl', 'draw_sphere_' + str(len(destination.shape)) + 'd', destination.shape, parameters)
+    execute(
+        __file__,
+        "clij-opencl-kernels/kernels/draw_sphere_"
+        + str(len(destination.shape))
+        + "d_x.cl",
+        "draw_sphere_" + str(len(destination.shape)) + "d",
+        destination.shape,
+        parameters,
+    )
     return destination

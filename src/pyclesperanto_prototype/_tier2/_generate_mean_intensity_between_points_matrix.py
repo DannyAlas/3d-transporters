@@ -1,10 +1,15 @@
-from .._tier0 import execute, plugin_function, Image, create_none, create_matrix_from_pointlists, create_like
+from .._tier0 import (Image, create_like, create_matrix_from_pointlists,
+                      create_none, execute, plugin_function)
 
 
 @plugin_function(output_creator=create_none)
-def generate_mean_intensity_between_points_matrix(intensity_image: Image, pointlist: Image, touch_matrix: Image = None,
-                                                  mean_intensity_matrix_destination: Image = None,
-                                                  num_samples: int = 10):
+def generate_mean_intensity_between_points_matrix(
+    intensity_image: Image,
+    pointlist: Image,
+    touch_matrix: Image = None,
+    mean_intensity_matrix_destination: Image = None,
+    num_samples: int = 10,
+):
     """Determine the mean average intensity between pairs of point coordinates and
     write them in a matrix.
 
@@ -28,7 +33,9 @@ def generate_mean_intensity_between_points_matrix(intensity_image: Image, pointl
     from .._tier1 import set
 
     if mean_intensity_matrix_destination is None:
-        mean_intensity_matrix_destination = create_matrix_from_pointlists(pointlist, pointlist)
+        mean_intensity_matrix_destination = create_matrix_from_pointlists(
+            pointlist, pointlist
+        )
 
     if touch_matrix is None:
         touch_matrix = create_like(mean_intensity_matrix_destination)
@@ -39,9 +46,15 @@ def generate_mean_intensity_between_points_matrix(intensity_image: Image, pointl
         "src_pointlist": pointlist,
         "src_intensity": intensity_image,
         "dst_mean_intensity_matrix": mean_intensity_matrix_destination,
-        "num_samples": int(num_samples)
+        "num_samples": int(num_samples),
     }
 
-    execute(__file__, 'mean_intensity_between_points_matrix_x.cl', 'mean_intensity_between_points_matrix', touch_matrix.shape, parameters)
+    execute(
+        __file__,
+        "mean_intensity_between_points_matrix_x.cl",
+        "mean_intensity_between_points_matrix",
+        touch_matrix.shape,
+        parameters,
+    )
 
     return mean_intensity_matrix_destination

@@ -1,11 +1,12 @@
-from pyclesperanto_prototype._tier0 import plugin_function
-from pyclesperanto_prototype._tier0 import Image
-from pyclesperanto_prototype._tier0 import create_none
-from .._tier0 import plugin_function
-from .._tier0 import create_vector_from_labelmap
+from pyclesperanto_prototype._tier0 import Image, create_none, plugin_function
+
+from .._tier0 import create_vector_from_labelmap, plugin_function
+
 
 @plugin_function(output_creator=create_vector_from_labelmap)
-def read_intensities_from_map(labels : Image, map_image : Image, values_destination : Image = None) -> Image:
+def read_intensities_from_map(
+    labels: Image, map_image: Image, values_destination: Image = None
+) -> Image:
     """Takes a label image and a parametric image to read parametric values from the labels positions.
     The read intensity values are stored in a new vector.
 
@@ -31,9 +32,15 @@ def read_intensities_from_map(labels : Image, map_image : Image, values_destinat
 
     parameters = {
         "labels": labels,
-        "map_image":map_image,
-        "intensities":values_destination
+        "map_image": map_image,
+        "intensities": values_destination,
     }
 
-    execute(__file__, 'read_intensities_from_map_x.cl', 'read_intensities_from_map', labels.shape, parameters)
+    execute(
+        __file__,
+        "read_intensities_from_map_x.cl",
+        "read_intensities_from_map",
+        labels.shape,
+        parameters,
+    )
     return values_destination

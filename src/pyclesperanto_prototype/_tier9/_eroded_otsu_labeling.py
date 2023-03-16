@@ -1,7 +1,15 @@
-from .._tier0 import plugin_function, Image, create_labels_like
+from .._tier0 import Image, create_labels_like, plugin_function
 
-@plugin_function(categories=['label', 'in assistant'], output_creator=create_labels_like)
-def eroded_otsu_labeling(image: Image, labels_destination: Image = None, number_of_erosions: int = 5, outline_sigma: float = 2) -> Image:
+
+@plugin_function(
+    categories=["label", "in assistant"], output_creator=create_labels_like
+)
+def eroded_otsu_labeling(
+    image: Image,
+    labels_destination: Image = None,
+    number_of_erosions: int = 5,
+    outline_sigma: float = 2,
+) -> Image:
     """Segments and labels an image using blurring, Otsu-thresholding, binary erosion and
     masked Voronoi-labeling.
 
@@ -39,12 +47,14 @@ def eroded_otsu_labeling(image: Image, labels_destination: Image = None, number_
     ..[1] https://zenodo.org/badge/latestdoi/434949702
     """
     from .._tier0 import create_like
-    from .._tier1 import gaussian_blur, copy, erode_box
-    from .._tier9 import threshold_otsu
+    from .._tier1 import copy, erode_box, gaussian_blur
     from .._tier5 import masked_voronoi_labeling
+    from .._tier9 import threshold_otsu
 
     # initial thresholding
-    blurred = gaussian_blur(image, sigma_x=outline_sigma, sigma_y=outline_sigma, sigma_z=outline_sigma)
+    blurred = gaussian_blur(
+        image, sigma_x=outline_sigma, sigma_y=outline_sigma, sigma_z=outline_sigma
+    )
     binary = threshold_otsu(blurred)
 
     # iterative erosion

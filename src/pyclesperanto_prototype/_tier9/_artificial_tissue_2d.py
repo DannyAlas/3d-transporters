@@ -1,5 +1,14 @@
 from .._tier0 import Image
-def artificial_tissue_2d(width: int = 256, height: int = 256, delta_x=24, delta_y=16, random_sigma_x=3, random_sigma_y=3) -> Image:
+
+
+def artificial_tissue_2d(
+    width: int = 256,
+    height: int = 256,
+    delta_x=24,
+    delta_y=16,
+    random_sigma_x=3,
+    random_sigma_y=3,
+) -> Image:
     """
 
     Parameters
@@ -15,11 +24,12 @@ def artificial_tissue_2d(width: int = 256, height: int = 256, delta_x=24, delta_
     -------
 
     """
-    from .._tier0 import push, create
-    from .._tier2 import pointlist_to_labelled_spots
-    from .._tier4 import extend_labeling_via_voronoi
     import numpy as np
     from numpy.random import normal
+
+    from .._tier0 import create, push
+    from .._tier2 import pointlist_to_labelled_spots
+    from .._tier4 import extend_labeling_via_voronoi
 
     all_x_coords = []
     all_y_coords = []
@@ -51,11 +61,7 @@ def artificial_tissue_2d(width: int = 256, height: int = 256, delta_x=24, delta_
             all_y_coords[i] = height
 
     # define centroids of cells
-    pointlist = push(np.asarray(
-        [
-            all_x_coords,
-            all_y_coords
-        ]))
+    pointlist = push(np.asarray([all_x_coords, all_y_coords]))
 
     centroids = pointlist_to_labelled_spots(pointlist)
 

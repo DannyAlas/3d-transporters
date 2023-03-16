@@ -1,7 +1,14 @@
-from .._tier0 import plugin_function, Image, create_2d_yx
+from .._tier0 import Image, create_2d_yx, plugin_function
 
-@plugin_function(output_creator = create_2d_yx, categories=['projection'])
-def extended_depth_of_focus_variance_projection(source : Image, destination : Image = None, radius_x : int = 10, radius_y : int = 10, sigma : float = 5) -> Image:
+
+@plugin_function(output_creator=create_2d_yx, categories=["projection"])
+def extended_depth_of_focus_variance_projection(
+    source: Image,
+    destination: Image = None,
+    radius_x: int = 10,
+    radius_y: int = 10,
+    sigma: float = 5,
+) -> Image:
     """Extended depth of focus projection maximizing local pixel intensity variance.
 
     Parameters
@@ -19,8 +26,10 @@ def extended_depth_of_focus_variance_projection(source : Image, destination : Im
     -------
     destination
     """
-    from .._tier1 import variance_sphere, gaussian_blur
-    from .._tier2 import z_position_of_maximum_z_projection, z_position_projection
+    from .._tier1 import gaussian_blur, variance_sphere
+    from .._tier2 import (z_position_of_maximum_z_projection,
+                          z_position_projection)
+
     variance = variance_sphere(source, radius_x=radius_x, radius_y=radius_y, radius_z=0)
 
     temp = gaussian_blur(variance, sigma_x=sigma, sigma_y=sigma, sigma_z=0)

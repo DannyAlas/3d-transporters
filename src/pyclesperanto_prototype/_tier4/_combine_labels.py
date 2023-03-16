@@ -1,9 +1,13 @@
-from .._tier0 import Image
-from .._tier0 import plugin_function
-from .._tier0 import create_labels_like
+from .._tier0 import Image, create_labels_like, plugin_function
 
-@plugin_function(categories=['label processing', 'combine labels', 'in assistant'], output_creator=create_labels_like)
-def combine_labels(labels_input1 : Image, labels_input2 : Image, labels_destination : Image = None) -> Image:
+
+@plugin_function(
+    categories=["label processing", "combine labels", "in assistant"],
+    output_creator=create_labels_like,
+)
+def combine_labels(
+    labels_input1: Image, labels_input2: Image, labels_destination: Image = None
+) -> Image:
     """Combines two label images by adding labels of a given label image to another. Labels in the second image
     overwrite labels in the first passed image. Afterwards, labels are relabeled sequentially.
 
@@ -20,11 +24,9 @@ def combine_labels(labels_input1 : Image, labels_input2 : Image, labels_destinat
     -------
     labels_destination
     """
-    from .._tier1 import greater_constant
-    from .._tier1 import maximum_images
+    from .._tier1 import (add_image_and_scalar, greater_constant, mask,
+                          maximum_images)
     from .._tier2 import maximum_of_all_pixels
-    from .._tier1 import add_image_and_scalar
-    from .._tier1 import mask
     from .._tier3 import relabel_sequential
 
     max_labels_1 = maximum_of_all_pixels(labels_input1)

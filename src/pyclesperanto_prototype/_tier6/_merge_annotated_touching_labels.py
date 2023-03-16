@@ -1,10 +1,13 @@
-from .._tier0 import create_labels_like
-from .._tier0 import plugin_function
-from .._tier0 import Image
+from .._tier0 import Image, create_labels_like, plugin_function
 
 
-@plugin_function(categories=['label processing', 'combine', 'in assistant'], output_creator=create_labels_like)
-def merge_annotated_touching_labels(labels:Image, annotation_binary_mask:Image, destination_labels:Image=None) -> Image:
+@plugin_function(
+    categories=["label processing", "combine", "in assistant"],
+    output_creator=create_labels_like,
+)
+def merge_annotated_touching_labels(
+    labels: Image, annotation_binary_mask: Image, destination_labels: Image = None
+) -> Image:
     """
     Takes a labelmap with n labels and merges all objects whose touching
     areas are annotated in a given binary image.

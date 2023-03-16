@@ -21,8 +21,10 @@ def create(dimensions, dtype=np.float32):
     )
     return Backend.get_instance().get().empty(dimensions, dtype)
 
+
 def create_zyx(dimensions):
     return create(dimensions[::-1])
+
 
 def create_like(*args):
     dimensions = args[0]
@@ -31,6 +33,7 @@ def create_like(*args):
     elif hasattr(dimensions, "shape"):
         dimensions = dimensions.shape
     return create(dimensions)
+
 
 def create_binary_like(*args):
     dimensions = args[0]
@@ -42,6 +45,7 @@ def create_binary_like(*args):
         dimensions = dimensions.shape
     return create(dimensions, np.uint8)
 
+
 def create_labels_like(*args):
     dimensions = args[0]
     if isinstance(dimensions, Backend.get_instance().get().array_type()):
@@ -51,6 +55,7 @@ def create_labels_like(*args):
     elif hasattr(dimensions, "shape"):
         dimensions = dimensions.shape
     return create(dimensions, np.uint32)
+
 
 def create_same_type_like(*args):
     dimensions = args[0]
@@ -62,24 +67,30 @@ def create_same_type_like(*args):
         dimensions = dimensions.shape
     return create(dimensions, dimensions.dtype)
 
+
 def create_pointlist_from_labelmap(source, *args):
     from .._tier2 import maximum_of_all_pixels
+
     number_of_labels = int(maximum_of_all_pixels(source))
     number_of_dimensions = len(source.shape)
-    
+
     return create([number_of_dimensions, number_of_labels])
+
 
 def create_vector_from_labelmap(source, *args):
     from .._tier2 import maximum_of_all_pixels
+
     number_of_labels = int(maximum_of_all_pixels(source)) + 1
 
     return create([1, number_of_labels])
+
 
 def create_matrix_from_pointlists(pointlist1, pointlist2):
     width = pointlist1.shape[1] + 1
     height = pointlist2.shape[1] + 1
 
     return create([height, width])
+
 
 def create_from_pointlist(pointlist, *args):
     from .._tier0 import pull
@@ -96,6 +107,7 @@ def create_from_pointlist(pointlist, *args):
         raise Exception("Size not supported: " + str(max_pos))
     return destination
 
+
 def create_square_matrix_from_pointlist(pointlist1):
     width = pointlist1.shape[1] + 1
 
@@ -104,6 +116,7 @@ def create_square_matrix_from_pointlist(pointlist1):
 
 def create_square_matrix_from_labelmap(labelmap):
     from .._tier2 import maximum_of_all_pixels
+
     width = int(maximum_of_all_pixels(labelmap) + 1)
 
     return create([width, width])
@@ -111,6 +124,7 @@ def create_square_matrix_from_labelmap(labelmap):
 
 def create_square_matrix_from_two_labelmaps(labelmap1, labelmap2):
     from .._tier2 import maximum_of_all_pixels
+
     width = int(maximum_of_all_pixels(labelmap1) + 1)
     height = int(maximum_of_all_pixels(labelmap2) + 1)
 
@@ -127,11 +141,13 @@ def create_2d_xy(source):
     else:
         return create([source.shape[1], source.shape[0]])
 
+
 def create_2d_yx(source):
     if len(source.shape) == 3:
         return create([source.shape[1], source.shape[2]])
     else:
         return create([source.shape[0], 1])
+
 
 def create_2d_zy(source):
     if len(source.shape) == 3:
@@ -139,11 +155,13 @@ def create_2d_zy(source):
     else:
         return create([1, source.shape[0]])
 
+
 def create_2d_yz(source):
     if len(source.shape) == 3:
         return create([source.shape[1], source.shape[0]])
     else:
         return create([source.shape[0], 1])
+
 
 def create_2d_zx(source):
     if len(source.shape) == 3:
@@ -151,11 +169,13 @@ def create_2d_zx(source):
     else:
         return create([1, source.shape[1]])
 
+
 def create_2d_xz(source):
     if len(source.shape) == 3:
         return create([source.shape[2], source.shape[0]])
     else:
         return create([source.shape[1], 1])
+
 
 def create_none(*args):
     return None

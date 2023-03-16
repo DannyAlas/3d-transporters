@@ -23,14 +23,14 @@ cl_image_datatype_dict.update(
 )
 
 
-
-#if characterize.has_double_support(get_device().device):
+# if characterize.has_double_support(get_device().device):
 #    cl_buffer_datatype_dict[np.float64] = "double"
-#else:
+# else:
 #    warnings.warn("Data type double is not supported by your GPU. Will use float instead.")
 
+
 def abspath(myPath):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
+    """Get absolute path to resource, works for dev and for PyInstaller"""
 
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
@@ -55,14 +55,12 @@ def assert_bufs_type(mytype, *bufs):
             % (mytype, str([b.dtype.type for b in bufs]))
         )
 
+
 def prepare(arr):
     return np.require(arr, None, "C")
 
 
-
 class OCLArray(ArrayOperators, array.Array, np.lib.mixins.NDArrayOperatorsMixin):
-
-
     @classmethod
     def from_array(cls, arr, *args, **kwargs):
         assert_supported_ndarray_type(arr.dtype.type)
@@ -78,7 +76,7 @@ class OCLArray(ArrayOperators, array.Array, np.lib.mixins.NDArrayOperatorsMixin)
     @classmethod
     def empty_like(cls, arr):
         assert_supported_ndarray_type(arr.dtype.type)
-        queue = get_device().queue # todo: get queue from arr
+        queue = get_device().queue  # todo: get queue from arr
         return OCLArray(queue, arr.shape, arr.dtype.type)
 
     @classmethod
@@ -87,6 +85,7 @@ class OCLArray(ArrayOperators, array.Array, np.lib.mixins.NDArrayOperatorsMixin)
         queue = get_device().queue
         new_array = OCLArray(queue, shape, dtype)
         from .._tier1 import set
+
         set(new_array, 0)
         return new_array
 
@@ -105,7 +104,6 @@ class OCLArray(ArrayOperators, array.Array, np.lib.mixins.NDArrayOperatorsMixin)
         queue = get_device().queue
         return cl.enqueue_copy(queue, self.data, prepare(arr), **kwargs)
 
-
     def __array__(self, dtype=None):
         if dtype is None:
             return self.get()
@@ -122,9 +120,11 @@ class OCLArray(ArrayOperators, array.Array, np.lib.mixins.NDArrayOperatorsMixin)
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         if method == "__call__":
-            func = getattr(OCLArray, f'__{ufunc.__name__}__', None)
+            func = getattr(OCLArray, f"__{ufunc.__name__}__", None)
             if func is not None:
-                return func(*[OCLArray.to_device(self.queue, i) for i in inputs], **kwargs)
+                return func(
+                    *[OCLArray.to_device(self.queue, i) for i in inputs], **kwargs
+                )
         return NotImplemented
 
     def copy_image(self, img, **kwargs):
@@ -141,10 +141,12 @@ class OCLArray(ArrayOperators, array.Array, np.lib.mixins.NDArrayOperatorsMixin)
 
     def astype(self, dtype, copy=None):
         from ._create import create
+
         if dtype == float or dtype == np.float64:
             dtype = np.float32
         copied = create(self.shape, dtype=dtype)
         from .._tier1 import copy
+
         return copy(self, copied)
 
     def wrap_module_func(mod, f):
@@ -153,16 +155,15 @@ class OCLArray(ArrayOperators, array.Array, np.lib.mixins.NDArrayOperatorsMixin)
 
         return func
 
-
     def _new_with_changes(
-            self,
-            data,
-            offset,
-            shape=None,
-            dtype=None,
-            strides=None,
-            queue=None,
-            allocator=None,
+        self,
+        data,
+        offset,
+        shape=None,
+        dtype=None,
+        strides=None,
+        queue=None,
+        allocator=None,
     ):
         """
         :arg data: *None* means allocate a new array.
@@ -181,8 +182,9 @@ class OCLArray(ArrayOperators, array.Array, np.lib.mixins.NDArrayOperatorsMixin)
             events=None if data is None else self.events,
         )
 
+
 class _OCLImage:
-    def __init__(self, cl_image : cl.Image):
+    def __init__(self, cl_image: cl.Image):
         self.data = cl_image
         self.shape = cl_image.shape[::-1]
         self.dtype = cl_image.dtype

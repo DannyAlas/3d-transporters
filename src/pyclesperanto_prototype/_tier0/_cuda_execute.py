@@ -246,20 +246,22 @@ __device__ inline void write_buffer2d{typeId}(int write_buffer_width, int write_
 """
 
 type_dict = {
-    "f" : "float",
-    "d" : "double",
-    "c" : "char",
-    "uc" : "uchar",
-    "s" : "short",
-    "us" : "ushort",
-    "i" : "int",
-    "ui" : "uint",
-    "l" : "long",
-    "ul" : "ulong"
-    }
+    "f": "float",
+    "d": "double",
+    "c": "char",
+    "uc": "uchar",
+    "s": "short",
+    "us": "ushort",
+    "i": "int",
+    "ui": "uint",
+    "l": "long",
+    "ul": "ulong",
+}
 
 for type_id, pixel_type in type_dict.items():
-    preamble = preamble + preamble_per_type.replace("{typeId}",type_id).replace("{pixel_type}", pixel_type)
+    preamble = preamble + preamble_per_type.replace("{typeId}", type_id).replace(
+        "{pixel_type}", pixel_type
+    )
 
 COMMON_HEADER = """
 #define CONVERT_{key}_PIXEL_TYPE clij_convert_{pixel_type}_sat
@@ -274,13 +276,19 @@ SIZE_HEADER = """
 #define IMAGE_SIZE_{key}_DEPTH {depth}
 """
 
-ARRAY_HEADER = COMMON_HEADER + """
+ARRAY_HEADER = (
+    COMMON_HEADER
+    + """
 #define IMAGE_{key}_TYPE {size_parameters} {pixel_type}*
 #define READ_{key}_IMAGE(a,b,c) read_buffer{img_dims}d{typeId}(GET_IMAGE_WIDTH(a),GET_IMAGE_HEIGHT(a),GET_IMAGE_DEPTH(a),a,b,c)
 #define WRITE_{key}_IMAGE(a,b,c) write_buffer{img_dims}d{typeId}(GET_IMAGE_WIDTH(a),GET_IMAGE_HEIGHT(a),GET_IMAGE_DEPTH(a),a,b,c)
 """
+)
 
-def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters, constants = None):
+
+def execute(
+    anchor, opencl_kernel_filename, kernel_name, global_size, parameters, constants=None
+):
     from pathlib import Path
 
     # get code from disk
@@ -294,8 +302,9 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
 
     if constants is not None:
         for key, value in constants.items():
-            additional_code = additional_code + "#define " + str(key) + " " + str(value) + "\n"
-
+            additional_code = (
+                additional_code + "#define " + str(key) + " " + str(value) + "\n"
+            )
 
     arguments = []
 
@@ -308,9 +317,12 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
         arguments.append(global_size[0])
     else:
         arguments.append(1)
-    size_params = "int global_size_0_size, int global_size_1_size, int global_size_2_size, "
+    size_params = (
+        "int global_size_0_size, int global_size_1_size, int global_size_2_size, "
+    )
 
     from ._cuda_backend import CUDAArray
+
     for key, value in parameters.items():
 
         if isinstance(value, CUDAArray):
@@ -318,21 +330,20 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
 
         if isinstance(value, cp.ndarray):
             depth_height_width = [1, 1, 1]
-            depth_height_width[-len(value.shape):] = value.shape
+            depth_height_width[-len(value.shape) :] = value.shape
             depth, height, width = depth_height_width
-
 
             arguments.append(cp.int32(width))
             arguments.append(cp.int32(height))
             arguments.append(cp.int32(depth))
 
             if len(value.shape) < 3:
-                img_dims =2
-                pos_type ="int2"
+                img_dims = 2
+                pos_type = "int2"
                 pos = "(pos0, pos1)"
             else:
-                img_dims =3
-                pos_type ="int4"
+                img_dims = 3
+                pos_type = "int4"
                 pos = "(pos0, pos1, pos2, 0)"
 
             if value.dtype == np.dtype("uint8"):
@@ -366,19 +377,27 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
                 pixel_type = "double"
                 type_id = "d"
             else:
-                raise TypeError(f"Type {value.dtype} is currently unsupported for buffers/arrays")
+                raise TypeError(
+                    f"Type {value.dtype} is currently unsupported for buffers/arrays"
+                )
 
             width = "image_" + key + "_width"
             height = "image_" + key + "_height"
             depth = "image_" + key + "_depth"
 
-            size_params = size_params + "int " + width + ", int " + height + ", int " + depth + ", "
+            size_params = (
+                size_params
+                + "int "
+                + width
+                + ", int "
+                + height
+                + ", int "
+                + depth
+                + ", "
+            )
 
             additional_code = additional_code + SIZE_HEADER.format(
-                key=key,
-                width=width,
-                height=height,
-                depth=depth
+                key=key, width=width, height=height, depth=depth
             )
 
             additional_code = additional_code + ARRAY_HEADER.format(
@@ -388,7 +407,7 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
                 size_parameters=size_params,
                 pos_type=pos_type,
                 pos=pos,
-                typeId=type_id
+                typeId=type_id,
             )
             size_params = ""
             arguments.append(value)
@@ -418,7 +437,7 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
                 f"type {var_type}"
             )
 
-    #for i, a in enumerate(arguments):
+    # for i, a in enumerate(arguments):
     #    print(i, type(a), a)
 
     # dirty hacks
@@ -439,21 +458,19 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
     opencl_code = opencl_code.replace("inline", "__device__ inline")
     opencl_code = opencl_code.replace("#pragma", "// #pragma")
 
-
-
-    opencl_code = opencl_code.replace("__kernel ", "extern \"C\" __global__ ")
-    opencl_code = opencl_code.replace("\nkernel void", "\nextern \"C\" __global__ void")
+    opencl_code = opencl_code.replace("__kernel ", 'extern "C" __global__ ')
+    opencl_code = opencl_code.replace("\nkernel void", '\nextern "C" __global__ void')
 
     cuda_kernel = "\n".join([preamble, additional_code, opencl_code])
-    #print(cuda_kernel)
+    # print(cuda_kernel)
 
     # CUDA specific stuff
     block_size = (np.ones((len(global_size))) * 8).astype(int)
     grid_size = np.ceil(global_size / block_size).astype(int)
     grid = tuple(grid_size.tolist()[::-1])
     block = tuple(block_size.tolist())
-    #print("Grid", grid)
-    #print("Block", block)
+    # print("Grid", grid)
+    # print("Block", block)
 
     try:
         # load and compile
@@ -468,7 +485,5 @@ def execute(anchor, opencl_kernel_filename, kernel_name, global_size, parameters
         error.append(ce.get_message())
         error.append("CUDA compilation failed")
         raise RuntimeError("\n".join(error))
-    #for i, a in enumerate(arguments):
+    # for i, a in enumerate(arguments):
     #    print(i, type(a), a)
-
-

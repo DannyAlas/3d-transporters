@@ -1,19 +1,20 @@
-from .._tier0 import plugin_function
-from .._tier0 import Image, create_none, create_like
+from .._tier0 import Image, create_like, create_none, plugin_function
 
-@plugin_function(categories=['transform', 'in assistant'], output_creator=create_none)
+
+@plugin_function(categories=["transform", "in assistant"], output_creator=create_none)
 def rigid_transform(
-        source: Image,
-        destination: Image = None,
-        translate_x: float = 0,
-        translate_y: float = 0,
-        translate_z: float = 0,
-        angle_around_x_in_degrees: float = 0,
-        angle_around_y_in_degrees: float = 0,
-        angle_around_z_in_degrees: float = 0,
-        rotate_around_center: bool = True,
-        linear_interpolation: bool = False,
-        auto_size: bool = False) -> Image:
+    source: Image,
+    destination: Image = None,
+    translate_x: float = 0,
+    translate_y: float = 0,
+    translate_z: float = 0,
+    angle_around_x_in_degrees: float = 0,
+    angle_around_y_in_degrees: float = 0,
+    angle_around_z_in_degrees: float = 0,
+    rotate_around_center: bool = True,
+    linear_interpolation: bool = False,
+    auto_size: bool = False,
+) -> Image:
     """Translate the image by a given vector and rotate it by given angles.
 
     Angles are given in degrees. To convert radians to degrees, use this formula:
@@ -59,8 +60,8 @@ def rigid_transform(
     --------
     ..[1] affine_transform
     """
-    from ._AffineTransform3D import AffineTransform3D
     from ._affine_transform import affine_transform
+    from ._AffineTransform3D import AffineTransform3D
 
     if destination is None and not auto_size:
         destination = create_like(source)
@@ -81,4 +82,6 @@ def rigid_transform(
 
     transform.translate(translate_x, translate_y, translate_z)
 
-    return affine_transform(source, destination, transform, linear_interpolation, auto_size)
+    return affine_transform(
+        source, destination, transform, linear_interpolation, auto_size
+    )

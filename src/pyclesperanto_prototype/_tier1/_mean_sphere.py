@@ -1,15 +1,19 @@
-from .._tier0 import radius_to_kernel_size
-from .._tier0 import execute
-from .._tier0 import plugin_function
-from .._tier0 import Image
+from .._tier0 import Image, execute, plugin_function, radius_to_kernel_size
 
-@plugin_function(categories=['filter', 'denoise', 'in assistant'])
-def mean_sphere(source : Image, destination : Image = None, radius_x : float = 1, radius_y : float = 1, radius_z : float = 1) -> Image:
-    """Computes the local mean average of a pixels spherical neighborhood. 
-    
+
+@plugin_function(categories=["filter", "denoise", "in assistant"])
+def mean_sphere(
+    source: Image,
+    destination: Image = None,
+    radius_x: float = 1,
+    radius_y: float = 1,
+    radius_z: float = 1,
+) -> Image:
+    """Computes the local mean average of a pixels spherical neighborhood.
+
     The spheres size is specified by its half-width, half-height and
     half-depth (radius).
-    
+
     Parameters
     ----------
     source : Image
@@ -17,35 +21,42 @@ def mean_sphere(source : Image, destination : Image = None, radius_x : float = 1
     radius_x : Number, optional
     radius_y : Number, optional
     radius_z : Number, optional
-    
+
     Returns
     -------
     destination
-    
+
     Examples
     --------
     >>> import pyclesperanto_prototype as cle
     >>> cle.mean_sphere(source, destination, radius_x, radius_y, radius_z)
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_mean3DSphere
     """
 
-
-    kernel_size_x = radius_to_kernel_size(radius_x);
-    kernel_size_y = radius_to_kernel_size(radius_y);
-    kernel_size_z = radius_to_kernel_size(radius_z);
+    kernel_size_x = radius_to_kernel_size(radius_x)
+    kernel_size_y = radius_to_kernel_size(radius_y)
+    kernel_size_z = radius_to_kernel_size(radius_z)
 
     parameters = {
-        "dst":destination,
-        "src":source,
-        "Nx":int(kernel_size_x),
-        "Ny":int(kernel_size_y)
-    };
+        "dst": destination,
+        "src": source,
+        "Nx": int(kernel_size_x),
+        "Ny": int(kernel_size_y),
+    }
 
-    if (len(destination.shape) == 3):
-        parameters.update({"Nz":int(kernel_size_z)});
-    execute(__file__, 'clij-opencl-kernels/kernels/mean_sphere_' + str(len(destination.shape)) + 'd_x.cl', 'mean_sphere_' + str(len(destination.shape)) + 'd', destination.shape, parameters);
+    if len(destination.shape) == 3:
+        parameters.update({"Nz": int(kernel_size_z)})
+    execute(
+        __file__,
+        "clij-opencl-kernels/kernels/mean_sphere_"
+        + str(len(destination.shape))
+        + "d_x.cl",
+        "mean_sphere_" + str(len(destination.shape)) + "d",
+        destination.shape,
+        parameters,
+    )
 
     return destination

@@ -1,9 +1,10 @@
-from .._tier0 import plugin_function
-from .._tier0 import Image
+from .._tier0 import Image, plugin_function
+
 
 @plugin_function
-def generate_n_most_touching_neighbors_matrix(touch_amount_matrix: Image, touch_matrix_destination: Image = None,
-                                              n: int = 1) -> Image:
+def generate_n_most_touching_neighbors_matrix(
+    touch_amount_matrix: Image, touch_matrix_destination: Image = None, n: int = 1
+) -> Image:
     """Generates a touch matrix from a matrix describing how much labels touch
     by selecting the n neighbors most touching.
 
@@ -13,7 +14,8 @@ def generate_n_most_touching_neighbors_matrix(touch_amount_matrix: Image, touch_
     n: int, optional
         default: 1
     """
-    from .._tier1 import reciprocal, set_where_x_equals_y, nan_to_num, set_row, set_column, greater_constant, binary_and
+    from .._tier1 import (binary_and, greater_constant, nan_to_num, reciprocal,
+                          set_column, set_row, set_where_x_equals_y)
     from .._tier2 import maximum_of_all_pixels
     from .._tier3 import generate_n_nearest_neighbors_matrix
 

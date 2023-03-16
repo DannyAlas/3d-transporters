@@ -1,6 +1,8 @@
-import warnings
 import math
+import warnings
+
 import numpy as np
+
 
 def transform_from_string(text: str, image: np.ndarray):
     """
@@ -18,6 +20,7 @@ def transform_from_string(text: str, image: np.ndarray):
     """
     # Translated from https://github.com/clij/clij2/blob/a13ebc54863d56c5866e4343844764e5cc63cb0c/src/main/java/net/haesleinhuepf/clij2/plugins/AffineTransform3D.java#L50
     from ._AffineTransform3D import AffineTransform3D
+
     at = AffineTransform3D()
     while " =" in text:
         text = text.replace(" =", "=")
@@ -47,7 +50,11 @@ def transform_from_string(text: str, image: np.ndarray):
             at.rotate(axis=0, angle_in_degrees=number)
         elif command_parts[0] == "rotatey" or command_parts[0] == "rotate_y":
             at.rotate(axis=1, angle_in_degrees=number)
-        elif command_parts[0] == "rotatez" or command_parts[0] == "rotate_z" or command_parts[0] == "rotate":
+        elif (
+            command_parts[0] == "rotatez"
+            or command_parts[0] == "rotate_z"
+            or command_parts[0] == "rotate"
+        ):
             at.rotate(axis=2, angle_in_degrees=number)
         elif command_parts[0] == "translatex" or command_parts[0] == "translate_x":
             at.translate(translate_x=number)
@@ -97,6 +104,7 @@ def shear_angle_to_shear_factor(angle_in_degrees):
     """
     return 1.0 / math.tan((90 - angle_in_degrees) * math.pi / 180)
 
+
 def shear_factor_to_shear_angle(shear_factor):
     """
     Converts a shearing angle into a shearing factor
@@ -107,4 +115,4 @@ def shear_factor_to_shear_angle(shear_factor):
     -------
     float
     """
-    return  - math.atan(1.0 / shear_factor) * 180 / math.pi + 90
+    return -math.atan(1.0 / shear_factor) * 180 / math.pi + 90

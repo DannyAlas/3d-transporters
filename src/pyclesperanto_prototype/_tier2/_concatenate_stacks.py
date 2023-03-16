@@ -1,29 +1,32 @@
-from .._tier0 import plugin_function
-from .._tier0 import create
-from .._tier0 import create_none
-from .._tier0 import Image
+from .._tier0 import Image, create, create_none, plugin_function
 from .._tier1 import paste
 
-@plugin_function(output_creator=create_none, categories=['combine', 'transform', 'in assistant'])
-def concatenate_stacks(stack1 : Image, stack2 : Image, destination : Image = None) -> Image:
-    """Concatenates two stacks in Z. 
-    
+
+@plugin_function(
+    output_creator=create_none, categories=["combine", "transform", "in assistant"]
+)
+def concatenate_stacks(
+    stack1: Image, stack2: Image, destination: Image = None
+) -> Image:
+    """Concatenates two stacks in Z.
+
     Parameters
     ----------
     stack1 : Image
     stack2 : Image
     destination : Image, optional
-    
+
     Returns
     -------
     destination
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_concatenateStacks
     """
 
     import numpy as np
+
     dimensions = np.asarray(stack1.shape)
 
     if destination is None:

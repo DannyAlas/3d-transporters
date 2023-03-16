@@ -1,37 +1,41 @@
-from .._tier0 import plugin_function
-from .._tier0 import Image
-from .. import smaller_constant, greater_constant, binary_or
-from .._tier0 import create_none
-from .._tier0 import create_like
+from .. import binary_or, greater_constant, smaller_constant
+from .._tier0 import Image, create_like, create_none, plugin_function
 
-@plugin_function(output_creator=create_none, categories=['label processing', 'in assistant'])
-def exclude_labels_outside_size_range(source : Image, destination : Image = None, minimum_size : float = 0, maximum_size : float = 100) -> Image:
+
+@plugin_function(
+    output_creator=create_none, categories=["label processing", "in assistant"]
+)
+def exclude_labels_outside_size_range(
+    source: Image,
+    destination: Image = None,
+    minimum_size: float = 0,
+    maximum_size: float = 100,
+) -> Image:
     """Removes labels from a label map which are not within a certain size range.
-    
-    Size of the labels is given as the number of pixel or voxels per label. 
-    
+
+    Size of the labels is given as the number of pixel or voxels per label.
+
     Parameters
     ----------
     source : Image
     destination : Image, optional
     minimum_size : Number, optional
     maximum_size : Number, optional
-    
+
     Returns
     -------
     destination
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_excludeLabelsOutsideSizeRange
     """
-    from .._tier9 import statistics_of_background_and_labelled_pixels
-    from .._tier9 import push_regionprops_column
+    from .._tier9 import (push_regionprops_column,
+                          statistics_of_background_and_labelled_pixels)
 
     regionprops = statistics_of_background_and_labelled_pixels(None, source)
 
-    values_vector = push_regionprops_column(regionprops, 'area')
-
+    values_vector = push_regionprops_column(regionprops, "area")
 
     above = create_like(values_vector)
     below = create_like(values_vector)
@@ -43,6 +47,7 @@ def exclude_labels_outside_size_range(source : Image, destination : Image = None
     binary_or(below, above, flaglist_vector)
 
     from .._tier3 import exclude_labels
+
     destination = exclude_labels(flaglist_vector, source, destination)
 
     return destination

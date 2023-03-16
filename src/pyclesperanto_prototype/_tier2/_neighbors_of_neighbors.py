@@ -1,15 +1,14 @@
-from .._tier0 import execute
-from .._tier0 import plugin_function
-from .._tier0 import Image
-from .._tier1 import multiply_matrix
-from .._tier1 import greater_constant
-from .._tier0 import create_like
+from .._tier0 import Image, create_like, execute, plugin_function
+from .._tier1 import greater_constant, multiply_matrix
+
 
 @plugin_function
-def neighbors_of_neighbors(touch_matrix : Image, neighbor_matrix_destination : Image = None) -> Image:
-    """Determines neighbors of neigbors from touch matrix and saves the result 
-    as a new touch matrix. 
-    
+def neighbors_of_neighbors(
+    touch_matrix: Image, neighbor_matrix_destination: Image = None
+) -> Image:
+    """Determines neighbors of neigbors from touch matrix and saves the result
+    as a new touch matrix.
+
     Parameters
     ----------
     touch_matrix : Image
@@ -18,7 +17,7 @@ def neighbors_of_neighbors(touch_matrix : Image, neighbor_matrix_destination : I
     Returns
     -------
     neighbor_matrix_destination
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_neighborsOfNeighbors

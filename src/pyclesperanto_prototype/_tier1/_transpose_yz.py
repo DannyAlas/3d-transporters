@@ -1,35 +1,31 @@
-from .._tier0 import execute
-from .._tier0 import plugin_function
-from .._tier0 import create_none
-from .._tier0 import create
-from .._tier0 import Image
+from .._tier0 import Image, create, create_none, execute, plugin_function
 
-@plugin_function(output_creator=create_none, categories=['transform'])
-def transpose_yz(source : Image, destination : Image = None) -> Image:
+
+@plugin_function(output_creator=create_none, categories=["transform"])
+def transpose_yz(source: Image, destination: Image = None) -> Image:
     """Transpose Y and Z axes of an image.
-    
+
     Parameters
     ----------
     source : Image
         The input image.
     destination : Image, optional
         The output image where results are written into.
-     
-    
+
+
     Returns
     -------
     destination
-    
+
     Examples
     --------
     >>> import pyclesperanto_prototype as cle
     >>> cle.transpose_yz(input, destination)
-    
+
     References
     ----------
     .. [1] https://clij.github.io/clij2-docs/reference_transposeYZ
     """
-
 
     if destination is None:
         dimensions = source.shape
@@ -40,12 +36,14 @@ def transpose_yz(source : Image, destination : Image = None) -> Image:
         elif len(dimensions) == 1:
             destination = create([1, 1, dimensions[0]])
 
+    parameters = {"src": source, "dst": destination}
 
-    parameters = {
-        "src":source,
-        "dst":destination
-    }
-
-    execute(__file__, 'clij-opencl-kernels/kernels/transpose_yz_3d_x.cl', 'transpose_yz_3d', destination.shape, parameters)
+    execute(
+        __file__,
+        "clij-opencl-kernels/kernels/transpose_yz_3d_x.cl",
+        "transpose_yz_3d",
+        destination.shape,
+        parameters,
+    )
 
     return destination
