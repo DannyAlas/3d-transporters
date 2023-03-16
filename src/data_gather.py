@@ -2,12 +2,9 @@ import logging
 import os
 import warnings
 from asyncio.log import logger
-from copy import copy, deepcopy
-from importlib.metadata import metadata
 from multiprocessing import Pool, cpu_count
 
 import matplotlib.pyplot as plt
-import napari
 import numpy as np
 import pandas as pd
 from napari import Viewer
