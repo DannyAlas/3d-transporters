@@ -1,6 +1,5 @@
 import logging
 import os
-import warnings
 from asyncio.log import logger
 from multiprocessing import Pool, cpu_count
 from typing import Dict, NewType, Tuple
@@ -11,7 +10,6 @@ import pandas as pd
 from napari import Viewer
 from napari.types import ImageData, LabelsData
 from nd2reader import ND2Reader
-import scipy
 from skimage.exposure import rescale_intensity
 from skimage.filters import (gaussian, threshold_isodata, threshold_li,
                              threshold_mean, threshold_minimum, threshold_otsu,
@@ -21,6 +19,7 @@ from skimage.measure import label, regionprops, regionprops_table
 from skimage.morphology import local_maxima
 from skimage.segmentation import watershed as _watershed
 from skimage.util import img_as_ubyte
+from queue import Queue
 
 logger = logging.getLogger(__name__)
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -38,10 +37,13 @@ THRESH_METHODS = {
     "Yen": threshold_yen,
 }
 
+queue = Queue()
 FAILED = {}
-
-
+queue.put(FAILED)
 class _layers:
+    """
+    A class to store layers in a napari viewer
+    """
     def __iter__(self):
         for attr, value in self.__dict__.items():
             if not attr.startswith("__") and not callable(attr):
@@ -228,10 +230,13 @@ def create_threshold_hist_plot(image: np.ndarray, file):
             fig.suptitle("Thresholding methods", fontsize=16)
         except Exception as e:
             logger.error(f"Failed try_all_thresholds: {e}")
+            global queue
+            FAILED = queue.get()
             if FAILED.get(str(file)):
                 FAILED[str(file)]["threshold_hist"] = e
             else:
                 FAILED[str(file)] = {"threshold_hist": e}
+            queue.put(FAILED)
 
     # FIXME: implement some way to determine the best thresholding method, currently we'll just use Otsu
     # try: DOI:10.1109/ICSIPA.2009.5478623 or maybe Median & Median Absolute Deviation...
@@ -303,7 +308,10 @@ def save_layers(viewer: _layers, file: str) -> None:
         exist_ok=True,
     )
     for layer in viewer:
+        print(f"Saving layer {layer.name}")
         try:
+            # check if image is binary
+            imageU = img_as_ubyte(layer.data)
             imsave(
                 os.path.join(
                     os.path.dirname(file),
@@ -311,11 +319,10 @@ def save_layers(viewer: _layers, file: str) -> None:
                     "layers",
                     f"{layer.name}.tiff",
                 ),
-                np.asarray(layer.data),
+                np.asarray(imageU), check_contrast=False
             )
         except Exception as e:
             try:
-                image = img_as_ubyte(layer.data)
                 imsave(
                     os.path.join(
                         os.path.dirname(file),
@@ -323,10 +330,16 @@ def save_layers(viewer: _layers, file: str) -> None:
                         "layers",
                         f"{layer.name}.tiff",
                     ),
-                    image,
+                    layer.data, check_contrast=False
                 )
             except Exception as e:
-                FAILED[file]["save_layers"] = e
+                global queue
+                FAILED = queue.get()
+                if FAILED.get(file):
+                    FAILED[file]["save_layers"] = e
+                else:
+                    FAILED[file] = {"save_layers": e}
+                queue.put(FAILED)
 
 
 def calculate_colo(
@@ -386,9 +399,35 @@ def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
             vglut3_labels = layer.data
         if layer.name == "VGluT3_binary":
             vglut3_binary = layer.data
-    assert (
-        vgat_labels is not None and gfp_binary is not None and vglut3_labels is not None
-    ), "VGaT, GFP and VGluT3 layers are required for colocalization calculation."
+
+    layers_found = {
+        "vgat_labels": locals().get("vgat_labels") is not None,
+        "vgat_binary": locals().get("vgat_binary") is not None,
+        "gfp_binary": locals().get("gfp_binary") is not None,
+        "vglut3_labels": locals().get("vglut3_labels") is not None,
+        "vglut3_binary": locals().get("vglut3_binary") is not None,
+    }
+    
+    if not all([
+        locals().get("vgat_labels") is not None,
+        locals().get("vgat_binary") is not None,
+        locals().get("gfp_binary") is not None,
+        locals().get("vglut3_labels") is not None,
+        locals().get("vglut3_binary") is not None,
+    ]):
+        print("Could not find all layers for colocalization calculation. Found layers: ", layers_found)
+        global queue
+        FAILED = queue.get()
+        if FAILED.get(file):
+            FAILED[file]["calculate_colocalization"] = (
+                f"Could not find all layers for colocalization calculation. Found layers: {layers_found}"
+            )
+        else:
+            FAILED[file] = {
+                "calculate_colocalization": f"Could not find all layers for colocalization calculation. Found layers: {layers_found}"
+            }
+        queue.put(FAILED)
+        return
 
     properties = (
             "label",
@@ -421,7 +460,7 @@ def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
             "layers",
             "VGaT_colocalization.tiff",
         ),
-        np.asarray(colo_vgat_vglut),
+        np.asarray(colo_vgat_vglut), check_contrast=False
     )
 
     imsave(
@@ -431,7 +470,7 @@ def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
             "layers",
             "VGluT3_colocalization.tiff",
         ),
-        np.asarray(colo_vglut_vgat),
+        np.asarray(colo_vglut_vgat), check_contrast=False
     )
 
     colo_vgat_vglut_table = pd.DataFrame(
@@ -553,7 +592,11 @@ def runner(file: str):
 
 
 def main(dir: str):
-    warnings.filterwarnings("ignore")
+    import imageio.core.util
+    def ignore_warnings(*args, **kwargs):
+        pass
+    imageio.core.util._precision_warn = ignore_warnings
+
     files = []
     if os.path.isfile(dir):
         files.append(dir)
@@ -572,11 +615,15 @@ def main(dir: str):
     pool.join()
     # close the pool
     pool.terminate()
+    global queue
+    FAILED = queue.get()
+    print("Failed to process the following files: ", FAILED)
     if len(FAILED) != 0:
         for file, e in FAILED.items():
             print(f"failed to process {file}: {e}")
     else:
         print("all files processed successfully")
+        
 
 
 if __name__ == "__main__":
