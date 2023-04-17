@@ -581,4 +581,5 @@ def main(dir: str):
 
 if __name__ == "__main__":
     input_dir = input("Enter the directory OR the file to be analyzed: ")
+    input_dir = input_dir.strip('"')
     main(input_dir)
