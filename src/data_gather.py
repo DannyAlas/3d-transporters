@@ -3,6 +3,7 @@ import os
 import warnings
 from asyncio.log import logger
 from multiprocessing import Pool, cpu_count
+from typing import Dict, NewType, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,6 +11,7 @@ import pandas as pd
 from napari import Viewer
 from napari.types import ImageData, LabelsData
 from nd2reader import ND2Reader
+import scipy
 from skimage.exposure import rescale_intensity
 from skimage.filters import (gaussian, threshold_isodata, threshold_li,
                              threshold_mean, threshold_minimum, threshold_otsu,
@@ -231,26 +233,23 @@ def create_threshold_hist_plot(image: np.ndarray, file):
             else:
                 FAILED[str(file)] = {"threshold_hist": e}
 
-    # determine the best thresholding method by the threshold that has the lowes misclassification rate
-    misclassification_rate = {}
-    for method, values in threshes.items():
-        # FIXME: this is just temporary, a better way to determine the best thresholding method should be implemented
-        misclassification_rate[method] = np.abs(values["above"] - values["below"])
-        # best method is the method with the misclassification rate closest to 0
-        # best_method = min(misclassification_rate, key=misclassification_rate.get)
+    # FIXME: implement some way to determine the best thresholding method, currently we'll just use Otsu
+    # try: DOI:10.1109/ICSIPA.2009.5478623 or maybe Median & Median Absolute Deviation...
 
     fig.tight_layout(h_pad=0.2, w_pad=0.1)
 
     return fig, "Otsu"
 
 
-from typing import Dict, NewType
-
 layers = NewType("layers", Dict[str, np.ndarray])
 
 
 class layers:
-    name = "test"
+    """
+    A class used to represent layers in the napari viewer
+    """
+
+    name = ""
     data = None
 
 
@@ -284,26 +283,18 @@ def run_tresh_and_segmentation(viewer: _layers, best_tresh: str):
         )
         print("created segmetation layer", layer.name)
         binary = segmetation_layer > 0
-        props = regionprops_table(
-            segmetation_layer, binary, properties=("label", "mean_intensity")
-        )
-        df = pd.DataFrame(props)
-        colo = df[df["mean_intensity"] > 0.1]
-        labels = np.where(
-            np.isin(segmetation_layer, colo["label"]), segmetation_layer, 0
-        )
-        print("created colo_labels layer", layer.name)
-        layers[f"{layer.name}_segmentation"] = segmetation_layer
+        print("created binary layer", layer.name)
+
         layers[f"{layer.name}_{best_tresh}_threshold".lower()] = tresh_layer
+        layers[f"{layer.name}_labels"] = segmetation_layer
         layers[f"{layer.name}_binary"] = binary
-        layers[f"{layer.name}_labels"] = labels
 
     for name, data in layers.items():
         viewer.add_layer(data, name=name)
         print(f"added {name} to viewer")
 
 
-def save_layers(viewer: _layers, file: str):
+def save_layers(viewer: _layers, file: str) -> None:
     # save the layers in the viewer
     file_name = os.path.basename(file)
     # create a folder for layers
@@ -338,59 +329,133 @@ def save_layers(viewer: _layers, file: str):
                 FAILED[file]["save_layers"] = e
 
 
+def calculate_colo(
+    layer1: np.ndarray, binary: np.ndarray, properties: Tuple[str] = None
+) -> np.ndarray:
+    """Get an array with the same size as layer1 containing only the labels in layer1 colocalized with the binary array.
+
+    Parameters
+    ----------
+    layer1 : np.ndarray
+        The layer containg labels to be filtered for colocalization with binary
+    binary : np.ndarray
+        The layer containg labels to find colocalization against for layer1 to be filtered
+
+    Returns
+    -------
+    np.ndarray
+        The filtered layer1 array
+    """
+    if properties is None:
+        properties = (
+            "label",
+            "mean_intensity",
+            "area",
+            "bbox",
+            "centroid",
+            "coords",
+        )
+    props = regionprops_table(layer1, binary, properties=properties)
+    df = pd.DataFrame(props)
+    colo = df[df["mean_intensity"] > 0]
+
+    # Part 1. np.isin(layer1, colo["label"]) returns a boolean array with the same size as layer1.
+    #     - If the element in layer1 is also in the 'colocalization with binary' array (colo["label"]),
+    #       the corresponding element in the boolean array is True. If the element in layer1 is not in
+    #       colo["label"], the corresponding element in the boolean array is False.
+    # Part 2. np.where(np.isin(layer1, colo["label"]), layer1, 0)
+    #     - If the element in the previously calculated boolean (np.isin) array is True, the returned
+    #       element in the array is the corresponding label from the layer1 array. If there is no
+    #       corresponding label in layer1, the returned element is 0.
+
+    return np.where(np.isin(layer1, colo["label"]), layer1, 0)
+
+
 def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
     for layer in viewer:
         # get the VGaT layer
         if layer.name == "VGaT_labels":
             vgat_labels = layer.data
+        if layer.name == "VGaT_binary":
+            vgat_binary = layer.data
         # get the GFP layer binary
         elif layer.name == "EGFP_binary":
             gfp_binary = layer.data
         # get the VGluT3
         elif layer.name == "VGluT3_labels":
             vglut3_labels = layer.data
-
+        if layer.name == "VGluT3_binary":
+            vglut3_binary = layer.data
     assert (
         vgat_labels is not None and gfp_binary is not None and vglut3_labels is not None
     ), "VGaT, GFP and VGluT3 layers are required for colocalization calculation."
 
-    properties = ("label", "mean_intensity", "area", "bbox")
-    props = regionprops_table(vgat_labels, gfp_binary, properties=properties)
-    df = pd.DataFrame(props)
-    colo = df[df["mean_intensity"] > 0]
-    colo_vgat_gfp = np.where(np.isin(vgat_labels, colo["label"]), vgat_labels, 0)
-
-    props = regionprops_table(
-        vglut3_labels,
-        gfp_binary,
-        properties=("label", "mean_intensity", "area", "bbox"),
+    properties = (
+            "label",
+            "mean_intensity",
+            "area",
+            "bbox",
+            "centroid",
+            "coords",
     )
-    df = pd.DataFrame(props)
-    colo = df[df["mean_intensity"] > 0]
-    colo_vglut_gfp = np.where(np.isin(vglut3_labels, colo["label"]), vglut3_labels, 0)
+    # calculate colocalization for VGaT with GFP
+    colo_vgat_gfp = calculate_colo(vgat_labels, gfp_binary, properties)
+    # calculate colocalization for VGluT3 with GFP
+    colo_vglut_gfp = calculate_colo(vglut3_labels, gfp_binary, properties)
 
-    colo_vgat_gfp_table = pd.DataFrame(
-        regionprops_table(colo_vgat_gfp, properties=("label", "area", "bbox"))
+    ####################################################################################
+    ####### Henceforth we will only use the colocalization with GFP for the rest #######
+    ####################### of the colocalization calculations #########################
+    ####################################################################################
+
+    # calculate colocalization for VGaT GFP+ with VGluT3
+    colo_vgat_vglut = calculate_colo(colo_vgat_gfp, vglut3_binary, properties)
+
+    # calculate colocalization for VGluT3 GFP+ with VGaT
+    colo_vglut_vgat = calculate_colo(colo_vglut_gfp, vgat_binary, properties)
+
+    imsave(
+        os.path.join(
+            os.path.dirname(file),
+            os.path.basename(file).split(".")[0],
+            "layers",
+            "VGaT_colocalization.tiff",
+        ),
+        np.asarray(colo_vgat_vglut),
     )
-    colo_vglut_gfp_table = pd.DataFrame(
-        regionprops_table(colo_vglut_gfp, properties=("label", "area", "bbox"))
+
+    imsave(
+        os.path.join(
+            os.path.dirname(file),
+            os.path.basename(file).split(".")[0],
+            "layers",
+            "VGluT3_colocalization.tiff",
+        ),
+        np.asarray(colo_vglut_vgat),
+    )
+
+    colo_vgat_vglut_table = pd.DataFrame(
+        regionprops_table(colo_vgat_vglut, colo_vglut_vgat, properties=properties)
+    )
+    colo_vglut_vgat_table = pd.DataFrame(
+        regionprops_table(colo_vglut_vgat, colo_vgat_vglut, properties=properties)
     )
 
     # convert the area to microns
-    colo_vgat_gfp_table["area"] = (
-        colo_vgat_gfp_table["area"] * metadata["pixel_microns"]
+    colo_vgat_vglut_table["area"] = (
+        colo_vgat_vglut_table["area"] * metadata["pixel_microns"]
     )
-    colo_vglut_gfp_table["area"] = (
-        colo_vglut_gfp_table["area"] * metadata["pixel_microns"]
+    colo_vglut_vgat_table["area"] = (
+        colo_vglut_vgat_table["area"] * metadata["pixel_microns"]
     )
 
     # rename the area column to colocalization area
-    colo_vgat_gfp_table.rename(columns={"area": "area µm^2"}, inplace=True)
-    colo_vglut_gfp_table.rename(columns={"area": "area µm^2"}, inplace=True)
+    colo_vgat_vglut_table.rename(columns={"area": "area µm^2"}, inplace=True)
+    colo_vglut_vgat_table.rename(columns={"area": "area µm^2"}, inplace=True)
 
-    # save the colocalization table
+    # save the colocalization tables
     file_name = os.path.basename(file)
-    colo_vgat_gfp_table.to_csv(
+    colo_vgat_vglut_table.to_csv(
         os.path.join(
             os.path.dirname(file),
             file_name.split(".")[0],
@@ -398,7 +463,7 @@ def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
         ),
         index=False,
     )
-    colo_vglut_gfp_table.to_csv(
+    colo_vglut_vgat_table.to_csv(
         os.path.join(
             os.path.dirname(file),
             file_name.split(".")[0],
@@ -407,14 +472,14 @@ def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
         index=False,
     )
 
-    # create a plot for number of colocalized VGaT and VGluT3
+    # create a plot for number of VGaT and VGluT3
     fig, ax = plt.subplots()
     ax.bar(
         ["VGaT", "VGluT3"],
-        [len(colo_vgat_gfp_table), len(colo_vglut_gfp_table)],
+        [len(colo_vgat_vglut_table), len(colo_vglut_vgat_table)],
     )
-    ax.set_title("Number of colocalized VGaT and VGluT3")
-    ax.set_ylabel("Number of colocalized VGaT and VGluT3")
+    ax.set_title("Number of VGaT and VGluT3 colocalization in GFP+")
+    ax.set_ylabel("Amount")
     ax.set_xlabel("VGaT and VGluT3")
     plt.savefig(
         os.path.join(
@@ -433,8 +498,8 @@ def calculate_colocalization(viewer: Viewer, metadata: dict, file: str):
             np.mean([prop.area for prop in regionprops(colo_vglut_gfp)]),
         ],
     )
-    ax.set_title("Average size of colocalized VGaT and VGluT3")
-    ax.set_ylabel("Average size of colocalized VGaT and VGluT3")
+    ax.set_title("Average size of VGaT and VGluT3 colocalization in GFP+")
+    ax.set_ylabel("Average size (µm^2)")
     ax.set_xlabel("VGaT and VGluT3")
     plt.savefig(
         os.path.join(
@@ -490,10 +555,13 @@ def runner(file: str):
 def main(dir: str):
     warnings.filterwarnings("ignore")
     files = []
-    for file in os.listdir(dir):
-        if file.endswith(".nd2"):
-            file = os.path.join(dir, file)
-            files.append(file)
+    if os.path.isfile(dir):
+        files.append(dir)
+    else:
+        for file in os.listdir(dir):
+            if file.endswith(".nd2"):
+                file = os.path.join(dir, file)
+                files.append(file)
 
     # create an instance of the pool class
     pool = Pool(cpu_count() - 1)
@@ -509,3 +577,8 @@ def main(dir: str):
             print(f"failed to process {file}: {e}")
     else:
         print("all files processed successfully")
+
+
+if __name__ == "__main__":
+    input_dir = input("Enter the directory OR the file to be analyzed: ")
+    main(input_dir)
